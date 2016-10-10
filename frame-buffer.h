@@ -10,6 +10,7 @@
 
 #include "frame-data.h"
 #include "publisher.h"
+#include "logger.hpp"
 
 class Publisher;
 
@@ -22,7 +23,7 @@ public:
 
     void init( int frameNumbers = 200 );
 
-    void recvFrame( FrameData &frame, unsigned int frameNo );
+    void recvFrame(FrameData &frame, ndn::Name framePrefix );
 
     boost::shared_ptr<SegmentData>
     acquireSegment( const ndn::Interest& interest );

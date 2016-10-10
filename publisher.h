@@ -4,6 +4,8 @@
 #include <ndn-cpp/name.hpp>
 #include <ndn-cpp/face.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
+#include <boost/asio.hpp>
+#include <ndn-cpp/threadsafe-face.hpp>
 
 #include "common.h"
 #include "name-components.h"
@@ -15,11 +17,13 @@ using namespace ndn;
 
 class FrameBuffer;
 
-class Publisher
+class Publisher //: public ptr_lib::enable_shared_from_this<Publisher>
 {
 public:
 
-    Publisher ( KeyChain &keyChain, const Name& certificateName );
+    Publisher ( boost::asio::io_service& ioService,
+                boost::shared_ptr<Face> face,
+                KeyChain &keyChain, const Name& certificateName );
 
     ~Publisher ();
 
@@ -35,15 +39,20 @@ public:
     bool isCached( FrameNumber frameNo )
     { return (frameNo >= cachedBegin_ && frameNo <= cachedEnd_) ? true : false; }
 
-    // onInterest.
-    void operator()
-                    (const ptr_lib::shared_ptr<const Name>& prefix,
+    void onInterest(const ptr_lib::shared_ptr<const Name>& prefix,
                     const ptr_lib::shared_ptr<const Interest>& interest, Face& face,
                     uint64_t interestFilterId,
                     const ptr_lib::shared_ptr<const InterestFilter>& filter);
+    // onInterest.
+//    void operator()
+//                    (const ptr_lib::shared_ptr<const Name>& prefix,
+//                    const ptr_lib::shared_ptr<const Interest>& interest, Face& face,
+//                    uint64_t interestFilterId,
+//                    const ptr_lib::shared_ptr<const InterestFilter>& filter);
 
+    void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix);
     // onRegisterFailed.
-    void operator()(const ptr_lib::shared_ptr<const Name>& prefix);
+    //void operator()(const ptr_lib::shared_ptr<const Name>& prefix);
 
 
     ndn::Name getStreamVideoPrefix()
@@ -61,7 +70,7 @@ public:
 
 private:
 
-    void excuteCapture();
+    void excuteCapture(unsigned int frameNo);
 
     void view();
 
@@ -71,6 +80,10 @@ private:
 
     KeyChain        keyChain_;
     Name            certificateName_;
+    boost::shared_ptr<Face>       face_;
+    boost::asio::io_service& ioService_;
+    uint64_t        registedId_;
+
     int             requestCounter_,
                     responseCount_;
 

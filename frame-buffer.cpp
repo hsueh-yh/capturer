@@ -8,7 +8,7 @@
 
 FrameBuffer::FrameBuffer() :
     maxSegmentSize_(ndn::Face::getMaxNdnPacketSize()),
-    maxSegBlockSize_(maxSegmentSize_-SegmentData::getHeaderSize()),
+    maxSegBlockSize_(ndn::Face::getMaxNdnPacketSize()-SegmentData::getHeaderSize()),
     bufSize_(200)
 {
     init();
@@ -27,36 +27,26 @@ FrameBuffer::init(int frameNumbers)
 }
 
 void
-FrameBuffer::recvFrame( FrameData &frame, unsigned int frameNo )
+FrameBuffer::recvFrame( FrameData &frame, ndn::Name framePrefix )
 {
     boost::shared_ptr<DataBlock> segment;
     int size = frame.size();
-    ndn::Name stmPrefix = publisher_->getStreamVideoPrefix();
 
-    if( size <= maxSegBlockSize_ )
+    int segNum = ceil( (double)size / (double)maxSegBlockSize_ );
+    int lastSegSize = size % maxSegBlockSize_;
+
+    int currentBlockSize;
+    for( int i = 0; i < segNum; i++ )
     {
+        currentBlockSize = (i==segNum-1) ? lastSegSize : maxSegBlockSize_;
         segment = getFreeSlot();
-        segment->fillData(frame.getData(),size);
-        ndn::Name segPrefix(stmPrefix);
-        segPrefix.append(NdnRtcUtils::componentFromInt(frameNo));
-        segPrefix.append(NdnRtcUtils::componentFromInt(0));
-        activeSlots_[segPrefix] = segment;
-    }
-    else
-    {
-        int segNum = ceil( (double)size / (double)maxSegBlockSize_ );
-        int lastSegSize = size % maxSegBlockSize_;
-        for( int i = 0; i < segNum; i++ )
-        {
-            segment = getFreeSlot();
-            segment->fillData(frame.getData()+(i*maxSegBlockSize_),
-                                     i==segNum-1 ? lastSegSize : maxSegBlockSize_);
+        segment->fillData(frame.getData()+(i*maxSegBlockSize_),currentBlockSize);
 
-            ndn::Name segPrefix(stmPrefix);
-            segPrefix.append(NdnRtcUtils::componentFromInt(frameNo));
-            segPrefix.append(NdnRtcUtils::componentFromInt(i));
-            activeSlots_[segPrefix] = segment;
-        }
+        ndn::Name segPrefix(framePrefix);
+        segPrefix.append(NdnRtcUtils::componentFromInt(i));
+        activeSlots_[segPrefix] = segment;
+        LOG(INFO) << "[FrameBuffer] Cached " << segPrefix.toUri()
+                  << " ( Size = " << currentBlockSize<<" )" << endl;
     }
 }
 

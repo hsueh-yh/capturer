@@ -43,6 +43,8 @@ public:
         backup(false)
     {}
 
+    ~Capturer()
+    { stop(); }
     int init()
     {
         openDevice();

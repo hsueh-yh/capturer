@@ -24,7 +24,8 @@ public:
         backup(0),
         frameNo_(-1)
     {}
-    ~Encoder(){}
+    ~Encoder()
+    { stop(); }
 
     int init(AVCodecID codec_id)
     {
@@ -115,6 +116,14 @@ public:
         av_packet_unref(&avpkt);
     }
 
+    int getEncodeHight()
+    { return height; }
+
+    int getEncodeWidth()
+    { return width; }
+
+    double getPacketRate()
+    { return (double)(codeCtx->framerate.num)/(double)(codeCtx->framerate.den); }
 private:
 
     int encode( unsigned char *inbuf, int inlen, unsigned char* outbuf, int &outlen )
