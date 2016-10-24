@@ -6,10 +6,12 @@
 #include "name-components.h"
 #include "namespacer.h"
 
-FrameBuffer::FrameBuffer() :
+FrameBuffer::FrameBuffer(ndn::Name basePrefix) :
     maxSegmentSize_(ndn::Face::getMaxNdnPacketSize()),
     maxSegBlockSize_(ndn::Face::getMaxNdnPacketSize()-SegmentData::getHeaderSize()),
+    basePrefix_(basePrefix),
     bufSize_(200),
+    lastPkgNo_(0),
     isbackup(false)
 {
     init();
@@ -40,33 +42,17 @@ FrameBuffer::init(int frameNumbers)
 }
 
 void
-FrameBuffer::recvFrame( FrameData &frame, ndn::Name framePrefix )
+FrameBuffer::appendData(const unsigned char* data, const unsigned int size)
 {
     lock_guard<recursive_mutex> scopedLock(syncMutex_);
     //fwrite(frame.getFrameData(),1,frame.getDataBlockSize(),fp);
 
     ptr_lib::shared_ptr<DataBlock> dataBlock;
-    int size = frame.size();
 
     int segNum = ceil( (double)size / (double)maxSegBlockSize_ );
     int lastSegSize = size % maxSegBlockSize_;
 
-    ptr_lib::shared_ptr<PrefixMetaInfo> frameMeta = getFreeFrameMeta();
-    if( !frameMeta.get() )
-    {
-        LOG(ERROR) << "[FrameBuffer] recvFrame no freeFrameMeta!" << endl;
-    }
-    frameMeta->totalSegmentNum_ = segNum;
-    frameMeta->deltaFrameNo_ = segNum;
-    frameMeta->playbackNo_ = 0;
-    activeFrameMeta_[framePrefix] = frameMeta;
-
-//    cout <<"Frame: "
-//         << " size=" << frame.size()
-//         << " data: " << (void*)const_cast<unsigned char*>(frame.getBuf())
-//         << " ~ " << (void*)frame.getFrameData()
-//         << " ~ " << (void*)(frame.getBuf()+frame.size())
-//         << endl << endl;
+    uint8_t nalHead = data[4];
 
     int currentBlockSize;
     for( int i = 0; i < segNum; i++ )
@@ -83,7 +69,7 @@ FrameBuffer::recvFrame( FrameData &frame, ndn::Name framePrefix )
 //             << " ~ " << (void*)(frame.getBuf()+currentBlockSize)
 //             << endl << endl;
 
-        dataBlock->fillData(frame.getBuf()+(i*maxSegBlockSize_),currentBlockSize);
+        dataBlock->fillData(data+(i*maxSegBlockSize_),currentBlockSize);
 
 //        cout << "Block" << i
 //             << " size=" << dataBlock->size()
@@ -97,52 +83,41 @@ FrameBuffer::recvFrame( FrameData &frame, ndn::Name framePrefix )
 //        for( int i = 0; i< dataBlock->size(); ++i )
 //            cout << hex << dataBlock->dataPtr()[i] << " " ;
 
-        ndn::Name segPrefix(framePrefix);
-        segPrefix.append(NdnRtcUtils::componentFromInt(i));
-        activeSlots_[segPrefix] = dataBlock;
+        ndn::Name dataPrefix(basePrefix_);
+        dataPrefix.append(NdnRtcUtils::componentFromInt(++lastPkgNo_));
+        std::vector<uint8_t> value;
+        value.push_back(nalHead);
+        dataPrefix.append(value);
+        activeSlots_[dataPrefix] = dataBlock;
 
 
-        LOG(INFO) << "[FrameBuffer] Cached " << segPrefix.toUri()
+        LOG(INFO) << "[FrameBuffer] Cached " << dataPrefix.toUri()
                   << " ( Size = " << dataBlock->size()<<" )" << endl;
     }
 }
 
-ptr_lib::shared_ptr<SegmentData>
-FrameBuffer::acquireSegment(const ndn::Interest& interest)
+ptr_lib::shared_ptr<DataBlock>
+FrameBuffer::acquireData(const ndn::Interest& interest)
 {
     lock_guard<recursive_mutex> scopedLock(syncMutex_);
 
-    ptr_lib::shared_ptr<SegmentData> segment;
-    std::map<ndn::Name, ptr_lib::shared_ptr<DataBlock> >::iterator iter;
-    iter = activeSlots_.find(interest.getName());
-    if (iter==activeSlots_.end())
-        return segment;
+    ptr_lib::shared_ptr<DataBlock> data;
+    std::map<ndn::Name, ptr_lib::shared_ptr<DataBlock> >::reverse_iterator re_iter;
+    //iter = activeSlots_.find(interest.getName());
 
-    ptr_lib::shared_ptr<DataBlock> segBlock = iter->second;
-    //cout << "********** size:" << segBlock->size() << " &data=" << (void*)(segBlock->dataPtr()) <<  endl;
-    uint32_t interestNonce_ = NdnRtcUtils::blobToNonce(interest.getNonce());
-    int64_t interestArrivalMs_ = NdnRtcUtils::microsecondTimestamp();
-
-
-    segment.reset(new SegmentData(segBlock->dataPtr(),
-                                   segBlock->size(),
-                                   (SegmentData::SegmentMetaInfo){interestNonce_,interestArrivalMs_,0}));
-    return segment;
-}
-
-ptr_lib::shared_ptr<PrefixMetaInfo>
-FrameBuffer::acquireFrameMeta(const ndn::Interest& interest)
-{
-    lock_guard<recursive_mutex> scopedLock(metaMutex_);
-
-    ptr_lib::shared_ptr<PrefixMetaInfo> frameMeta;
-    std::map<ndn::Name, ptr_lib::shared_ptr<PrefixMetaInfo> >::iterator iter;
-
-    iter = activeFrameMeta_.find(interest.getName().getPrefix(-1));
-    if ( iter != activeFrameMeta_.end() )
-        frameMeta = iter->second;
-
-    return frameMeta;
+    ptr_lib::shared_ptr<ndn::Name> name;
+    for( re_iter = activeSlots_.rbegin(); re_iter != activeSlots_.rend(); ++re_iter )
+    {
+        name = re_iter->first;
+        if( name->getPrefix(name->size()-2).equals(interest.getName()))
+            break;
+    }
+    if (re_iter!=activeSlots_.rend())   //if found
+    {
+        data = re_iter->second;
+        //cout << "********** size:" << segBlock->size() << " &data=" << (void*)(segBlock->dataPtr()) <<  endl;
+    }
+    return data;
 }
 
 void
@@ -169,16 +144,6 @@ FrameBuffer::reset()
         freeSlots_.push_back(segment);
     }
     activeSlots_.clear();
-
-
-    ptr_lib::shared_ptr<PrefixMetaInfo> frameMeta;
-    std::map<ndn::Name, ptr_lib::shared_ptr<PrefixMetaInfo> >::iterator iter;
-    for( iter = activeFrameMeta_.begin(); iter != activeFrameMeta_.end(); ++iter )
-    {
-        frameMeta = iter->second;
-        freeFrameMeta_.push_back(frameMeta);
-    }
-    activeFrameMeta_.clear();
 }
 
 void
@@ -189,13 +154,6 @@ FrameBuffer::initSlots()
         ptr_lib::shared_ptr<DataBlock> segment;
         segment.reset(new DataBlock(maxSegmentSize_));
         freeSlots_.push_back(segment);
-    }
-
-    while( freeFrameMeta_.size() <= bufSize_ )
-    {
-        ptr_lib::shared_ptr<PrefixMetaInfo> frameMeta;
-        frameMeta.reset(new PrefixMetaInfo);
-        freeFrameMeta_.push_back(frameMeta);
     }
 
     LOG(INFO) << "[FrameBuffer] init Slots " << bufSize_
@@ -227,31 +185,4 @@ FrameBuffer::getFreeSlot()
 //                  << " active = " << activeSlots_.size() << endl;
     }
     return segment;
-}
-
-ptr_lib::shared_ptr<PrefixMetaInfo>
-FrameBuffer::getFreeFrameMeta()
-{
-    ptr_lib::shared_ptr<PrefixMetaInfo> frameMeta;
-    if( freeFrameMeta_.size() )
-    {
-        frameMeta = freeFrameMeta_.at(freeFrameMeta_.size()-1);
-        freeFrameMeta_.pop_back();
-//        LOG(INFO) << "[FrameBuffer] getFree Slot left = " << freeSlots_.size()
-//                  << " active = " << activeSlots_.size() << endl;
-    }
-    else
-    {
-        std::map<ndn::Name, ptr_lib::shared_ptr<PrefixMetaInfo> >::iterator it;
-        it = activeFrameMeta_.begin();
-        frameMeta = (it)->second;
-        ndn::Name name(it->first);
-        activeFrameMeta_.erase(it);
-//        LOG(INFO) << "[FrameBuffer] getFree Slot left = " << freeSlots_.size()
-//                  << " active = " << activeSlots_.size() << endl;
-//        LOG(INFO) << "[FrameBuffer] getFree Slot EREASE " << name.toUri()
-//                  << " left = " << freeSlots_.size()
-//                  << " active = " << activeSlots_.size() << endl;
-    }
-    return frameMeta;
 }

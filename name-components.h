@@ -3,7 +3,8 @@
 
 #include <string>
 
-// Name:  .../monitor/<location>/<streams>/video(audio)/<frameNumber>/<segmentNumber>/<PrefixMetaInfo>
+// Name:  .../monitor/<location>/<streams>/video(audio)/<pktId>/NALU/<naluType>
+// Name:  .../video/<streams>/<pktId>/NALU/<naluType>
 
 class NameComponents {
 public:

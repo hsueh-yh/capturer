@@ -19,18 +19,15 @@ class FrameBuffer
 {
 public:
 
-    FrameBuffer();
+    FrameBuffer(Name basePrefix);
     ~FrameBuffer();
 
     void init( int frameNumbers = 100 );
 
-    void recvFrame(FrameData &frame, ndn::Name framePrefix );
+    void appendData(const unsigned char* data, const unsigned int size);
 
-    ptr_lib::shared_ptr<SegmentData>
-    acquireSegment( const ndn::Interest& interest );
-
-    ptr_lib::shared_ptr<PrefixMetaInfo>
-    acquireFrameMeta(const ndn::Interest& interest);
+    ptr_lib::shared_ptr<DataBlock>
+    acquireData( const ndn::Interest& interest );
 
     void getCachedRange(FrameNumber& start, FrameNumber& end);
 
@@ -42,15 +39,12 @@ private:
 
     ptr_lib::shared_ptr<DataBlock> getFreeSlot();
 
-    ptr_lib::shared_ptr<PrefixMetaInfo> getFreeFrameMeta();
-
-    ptr_lib::shared_ptr<Publisher> publisher_;
+    ndn::Name basePrefix_;
 
     std::vector<ptr_lib::shared_ptr<DataBlock> > freeSlots_;
-    //std::map<ndn::Name, ptr_lib::shared_ptr<SegmentData> > activeSlots_;
     std::map<ndn::Name, ptr_lib::shared_ptr<DataBlock> > activeSlots_;
-    std::vector<ptr_lib::shared_ptr<PrefixMetaInfo> > freeFrameMeta_;
-    std::map<ndn::Name, ptr_lib::shared_ptr<PrefixMetaInfo> > activeFrameMeta_;
+    ndn::Name lastPkgName_;
+    unsigned int lastPkgNo_;
 
     int     maxSegBlockSize_,
             maxSegmentSize_;

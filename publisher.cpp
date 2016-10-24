@@ -35,19 +35,14 @@ Publisher::Publisher (boost::asio::io_service &ioService,
     {
         fp_yuv = fopen ( "backup.yuv", "wb+" );
         if ( fp_yuv == NULL )
-            cout << "Open file backup.yuv error!" << endl;
+            LOG(INFO) << "Open file backup.yuv error!" << endl;
     }
     if( isBackup264 )
     {
         fp_264 = fopen ( "backup.264", "wb+" );
         if ( fp_264 == NULL )
-            cout << "Open file backup.264 error!" << endl;
+            LOG(INFO) << "Open file backup.264 error!" << endl;
     }
-    if( fp_yuv == NULL && fp_264 == NULL )
-        LOG(INFO) << "Publisher open file error!" << endl;
-    else
-        LOG(INFO) << "Publisher open file SUCCESS!" << endl;
-
 
     LOG(INFO) << "Publisher Constructor DONE." << endl;
 }
@@ -69,8 +64,8 @@ Publisher::~Publisher ()
 bool
 Publisher::init()
 {
-    framebuffer_.reset(new FrameBuffer);
-    framebuffer_->init(500);    //default 100
+    framebuffer_.reset(new FrameBuffer(getStreamPrefix()));
+    framebuffer_->init(100);    //default 100
     LOG(INFO) << "Register prefix " << streamPrefix_.toUri() << endl;
     registedId_ = face_->registerPrefix
           (streamPrefix_,
@@ -109,7 +104,7 @@ Publisher::start()
     LOG(INFO) << "[Publisher] Start " << std::endl;
     while( 1 )
     {
-        excuteCapture( ++currentFrameNo_ );
+        excuteCapture( /*++currentFrameNo_*/ );
         usleep(30000);
     }
     stop();
@@ -157,7 +152,6 @@ void Publisher::onInterest
     LOG(INFO) << "Request : " << requestName.toUri() << endl;
 
     ndn::Name metaName(streamPrefix_);
-    metaName.append(NameComponents::NameComponentStreamFrameVideo);
     metaName.append(NameComponents::NameComponentStreamMetainfo);
 
     // request metaInfo
@@ -171,39 +165,29 @@ void Publisher::onInterest
         return ;
     }
 
-    // data not exist return empty data
-    ptr_lib::shared_ptr<SegmentData> segment;
-    segment = framebuffer_->acquireSegment( *interest.get() );
+    // data not exist
+    ptr_lib::shared_ptr<DataBlock> naluData;
+    naluData = framebuffer_->acquireData( *interest.get() );
 
-    if( !segment )
+    if( !naluData )
     {
         FrameNumber start, end;
         framebuffer_->getCachedRange(start, end);
         cout << "No segment: " << interest->getName().toUri()
              << " Cached frameNo: " << start << " to " << end << endl;
-        Data emptyData(requestName);
-        face.putData(emptyData);
+        //Data emptyData(requestName);
+        //face.putData(emptyData);
         return ;
     }
 
-
-    ptr_lib::shared_ptr<PrefixMetaInfo> prefixMeta;
-    prefixMeta = framebuffer_->acquireFrameMeta(*interest.get());
-
-    cout << "***************"
-         << prefixMeta->totalSegmentNum_ << " "
-         << prefixMeta->playbackNo_ << " "
-         << prefixMeta->deltaFrameNo_<< endl;
-    Namespacer::setPrefixMetaInfo(requestName,*prefixMeta.get());
-
-    const Blob content ( segment->getBuf(), segment->size() );
+    const Blob content ( naluData->dataPtr(), naluData->size() );
 
     // Make and sign a Data packet.
-    Data data(requestName);
+    Data ndnData(requestName);
 
-    data.setContent( content );
+    ndnData.setContent( content );
 
-    keyChain_.sign(data, certificateName_);
+    keyChain_.sign(ndnData, certificateName_);
 
 //    unsigned int len = data.getContent().size();
 //    cout << len << endl;
@@ -213,12 +197,12 @@ void Publisher::onInterest
 //        fflush(stdout);
 //    }
 
-    face.putData(data);
+    face.putData(ndnData);
     ++responseCount_;
 
     LOG(INFO) << "Response: " << requestName.toUri()
          << " ( size: "
-         << segment->size() << " )"
+         << ndnData.getContent().size() << " )"
          << endl << endl;
 
 
@@ -253,47 +237,39 @@ Publisher::view()
 {}
 
 void
-Publisher::excuteCapture( unsigned int frameNo )
+Publisher::excuteCapture()
 {
     capturer.getFrame(outbufYUV,outlenYUV);
-    if( outlenYUV != 0 )
-    {
-        //cout << "get YUV " <<endl;
-        if(isBackupYUV && fp_yuv )
-            fwrite(outbufYUV,1,outlenYUV,fp_yuv);
-    }
-    else
+
+    if( outlenYUV == 0 )
     {
         LOG(WARNING) << "Capturer fail" << endl;
         return ;
     }
-
-    if( outlenYUV != 0 )
+    // get YUV frame
+    else
     {
+        //cout << "Get YUV " <<endl;
+        if(isBackupYUV && fp_yuv )
+            fwrite(outbufYUV,1,outlenYUV,fp_yuv);
+
+        // encode
         encoder.getFrame(outbufYUV, outlenYUV, outbuf264, outlen264);
         if (outlen264 == 0)
-            cout << "no 264" << endl;
-        else
         {
-            FrameData::FrameMetadata frameHeader;
-            frameHeader.encodedHeight_ = encoder.getEncodeHight();
-            frameHeader.encodedWidth_ = encoder.getEncodeWidth();
-            frameHeader.packetRate_ = encoder.getPacketRate();
-            frameHeader.timestamp_ = NdnRtcUtils::microsecondTimestamp();
-            frameHeader.unixTimestamp_ = NdnRtcUtils::unixTimestamp();
-            FrameData frame( outbuf264, outlen264, &frameHeader );
-            ndn::Name framePrefix(streamPrefix_);
-            framePrefix.append(NameComponents::NameComponentStreamFrameVideo);
-            framePrefix.append(NdnRtcUtils::componentFromInt(frameNo));
-            framebuffer_->recvFrame(frame, framePrefix);
+            //cout << "NO 264" << endl;
+        }
+        else // get NALU data
+        {
+            cout << "Get 264 " << " ( size = " << outlen264 << " )" <<endl;
+            framebuffer_->appendData((const unsigned char*)outbuf264, (const unsigned int)outlen264);
 
             if( isBackup264 && fp_264 )
             {
-                //cout << "get 264 " << " ( size = " << outlen264 << " )" <<endl;
                 fwrite(outbuf264,1,outlen264,fp_264);
             }
         }
-    }
+    }//else
     //cout << endl;
 }
 

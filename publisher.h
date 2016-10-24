@@ -72,7 +72,7 @@ public:
 
 private:
 
-    void excuteCapture(unsigned int frameNo);
+    void excuteCapture();
 
     void view();
 
