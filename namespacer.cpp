@@ -5,10 +5,10 @@
 // Name:  .../monitor/<location>/<streams>/video(audio)/<frameNumber>/<segmentNumber>/<PrefixMetaInfo>
 
 
-shared_ptr<std::string>
+ptr_lib::shared_ptr<std::string>
 Namespacer::buildPath(bool precede, const std::string *component1, ...)
 {
-    shared_ptr<std::string> path(new std::string(""));
+    ptr_lib::shared_ptr<std::string> path(new std::string(""));
         va_list ap;
         va_start(ap, component1);
         const std::string *s = component1;
@@ -61,7 +61,7 @@ Namespacer::findComponent(const ndn::Name &prefix,
     return pos;
 }
 
-boost::shared_ptr<std::string>
+ptr_lib::shared_ptr<std::string>
 Namespacer::getLocationPrefix(const std::string &prefix,
                           const std::string &location)
 {
@@ -71,7 +71,7 @@ Namespacer::getLocationPrefix(const std::string &prefix,
                       &location);
 }
 
-boost::shared_ptr<std::string>
+ptr_lib::shared_ptr<std::string>
 Namespacer::getStreamPath(const std::string &prefix,
                       const std::string &location,
                       const std::string &streamName)
@@ -83,7 +83,7 @@ Namespacer::getStreamPath(const std::string &prefix,
                       &streamName);
 }
 
-boost::shared_ptr<std::string>
+ptr_lib::shared_ptr<std::string>
 Namespacer::getStreamVideoPath(const std::string &prefix,
                       const std::string &location,
                       const std::string &streamName)
@@ -96,7 +96,7 @@ Namespacer::getStreamVideoPath(const std::string &prefix,
                       &NameComponents::NameComponentStreamFrameVideo);
 }
 
-boost::shared_ptr<std::string>
+ptr_lib::shared_ptr<std::string>
 Namespacer::getStreamAudioPath(const std::string &prefix,
                       const std::string &location,
                       const std::string &streamName)
@@ -221,6 +221,15 @@ Namespacer::getPrefixMetaInfo(const ndn::Name &prefix,
 }
 
 void
+Namespacer::setPrefixMetaInfo(ndn::Name &prefix,
+                              PrefixMetaInfo& prefixMetaInfo)
+{
+    prefix.append(NdnRtcUtils::componentFromInt(prefixMetaInfo.totalSegmentNum_));
+    prefix.append(NdnRtcUtils::componentFromInt(prefixMetaInfo.playbackNo_));
+    prefix.append(NdnRtcUtils::componentFromInt(prefixMetaInfo.deltaFrameNo_));
+}
+
+void
 Namespacer::getFramePrefix(const Name &prefix, Name& subPrefix)
 {
     int p = -1;
@@ -234,13 +243,26 @@ Namespacer::getFramePrefix(const Name &prefix, Name& subPrefix)
     }
 }
 
-boost::shared_ptr<std::string>
+void
 Namespacer::getSegmentPrefix(const Name &prefix, Name &subPrefix)
 {
     int p = -1;
     p = findComponent(prefix,NameComponents::NameComponentStreamFrameVideo);
     if ( p < 0 )
         p = findComponent(prefix,NameComponents::NameComponentStreamFrameAudio);
+    if( p > 0 )
+    {
+        if( prefix.size() > p+3 )
+            subPrefix = prefix.getSubName(0,p+3);
+    }
+}
+
+void
+Namespacer::getStreamVideoPrefix(const Name &prefix, Name &subPrefix)
+{
+    int p = -1;
+    p = findComponent(prefix,NameComponents::NameComponentStreamFrameVideo);
+
     if( p > 0 )
     {
         if( prefix.size() > p+3 )

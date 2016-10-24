@@ -8,6 +8,7 @@
 const std::string NameComponents::NameComponentApp = "monitor";
 const std::string NameComponents::NameComponentStreamFrameVideo = "video";
 const std::string NameComponents::NameComponentStreamFrameAudio = "audio";
+const std::string NameComponents::NameComponentStreamMetainfo = "metainfo";
 //const std::string NameComponents::KeyComponent;
 //const std::string NameComponents::CertificateComponent;
 

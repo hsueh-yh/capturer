@@ -3,6 +3,7 @@
 
 
 #include <iostream>
+#include "frame-data.h"
 
 
 extern "C"
@@ -106,6 +107,14 @@ public:
         return encode( inbuf, inlen, outbuf, outlen );
     }
 
+    DataBlock* getExtradata()
+    {
+        if( codeCtx->extradata_size > 0 )
+        {
+            return new DataBlock(codeCtx->extradata,codeCtx->extradata_size);
+        }
+    }
+
     void stop()
     {
         if( backup )
@@ -124,6 +133,8 @@ public:
 
     double getPacketRate()
     { return (double)(codeCtx->framerate.num)/(double)(codeCtx->framerate.den); }
+
+
 private:
 
     int encode( unsigned char *inbuf, int inlen, unsigned char* outbuf, int &outlen )

@@ -16,7 +16,7 @@ BaseData::BaseData(unsigned int length, const unsigned char *rawData)
 
 BaseData::BaseData(const BaseData &mediaData)
 {
-    copyFromRaw( mediaData.size(), mediaData.getData() );
+    copyFromRaw( mediaData.size(), mediaData.getBuf() );
 }
 
 BaseData::~BaseData()

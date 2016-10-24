@@ -30,28 +30,94 @@ struct PrefixMetaInfo {
 
 
 class DataBlock {
+
 public:
-    DataBlock( unsigned int allocated ) :
-        allocated_(allocated),
-        length_(0),
+
+    DataBlock():
+        allocSize_(0),
+        payload_(0),
+        data_(NULL)
+    {}
+
+    /**
+     * @brief. copy from another DataBlock
+     * @note DEEP COPY
+     * @note NOT allocate memonry for redundant data.
+     *       allocSize_ = datablock.size(), NOT allocSize_ = datablock.allocatedSize()
+     */
+    DataBlock( const DataBlock& datablock )
+    {
+        DataBlock *d = const_cast<DataBlock*>(&datablock);
+        allocSize_ = d->size();
+        payload_ = d->size();
+        data_ = (unsigned char*) malloc(allocSize_);
+        memcpy( data_, d->dataPtr(), payload_ );
+    }
+
+    /**
+     * @brief allocate an empty DataBlock
+     */
+    DataBlock( unsigned int allocSize ) :
+        allocSize_(allocSize),
+        payload_(0),
         data_(NULL)
     {
-        data_ = (unsigned char*) malloc(allocated_);
+        data_ = (unsigned char*) malloc(allocSize_);
     }
+
+    /**
+     * @brief allocate and fill DataBlock
+     */
+    DataBlock(  unsigned char* data, unsigned int length ) :
+        allocSize_(length),
+        payload_(length),
+        data_(NULL)
+    {
+        data_ = (unsigned char*) malloc(allocSize_);
+        memcpy(data_,data,length);
+    }
+
     ~DataBlock()
     {
         if(data_)
             free(data_);
     }
 
-    void fillData( unsigned char* data, unsigned int length )
+
+    void fillData( const unsigned char* data, const unsigned int length )
     {
-        length_ = length;
-        data_ = data;
+        unsigned char* p = const_cast<unsigned char*>(data);
+        if( length > allocSize_)
+        {
+            //std::cout << length<< " not fill " << payload_ << std::endl;
+            return;
+        }
+        if( data_ == NULL )
+        {
+            allocSize_ = length;
+            data_ = (unsigned char*) malloc(allocSize_);
+            payload_ = length;
+        }
+        else
+        {
+            //std::cout << length<< " filled " << payload_ << std::endl;
+            payload_ = length;
+            memcpy(data_,p,length);
+        }
     }
 
-    unsigned int allocated_;
-    unsigned int length_;
+    unsigned int size()
+    { return payload_; }
+
+    unsigned int allocatedSize()
+    { return allocSize_; }
+
+    unsigned char* dataPtr()
+    { return data_; }
+
+protected:
+    unsigned int allocSize_;
+    unsigned int payload_;
     unsigned char* data_;
 };
 
@@ -66,7 +132,7 @@ public:
     virtual ~BaseData();
 
     int size() const { return length_; }
-    unsigned char* getData() const { return data_; }
+    unsigned char* getBuf() const { return data_; }
 
     virtual int
     initFromRawData(unsigned int dataLength,
@@ -174,7 +240,7 @@ public:
 
     FrameMetadata* getMetadata() { return (FrameMetadata*)(&data_[0]); }
 
-    unsigned int getDataSize() { return length_ - sizeof( FrameHeader); }
+    unsigned int getDataBlockSize() { return length_ - sizeof( FrameHeader); }
 
     unsigned char* getFrameData() { return (unsigned char*)(&data_[getHeaderSize()]);}
 

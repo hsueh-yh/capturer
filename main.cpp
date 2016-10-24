@@ -6,6 +6,7 @@
 #include <ndn-cpp/transport/unix-transport.hpp>
 #include <boost/asio.hpp>
 #include <ndn-cpp/threadsafe-face.hpp>
+#include <thread>
 
 #include "logger.hpp"
 #include "publisher.h"
@@ -37,7 +38,7 @@ int main(int argc, char** argv)
 
         // The default Face will connect using a Unix socket, or to "localhost".
         //Face face(HOST_DEFAULT,PORT_DEFAULT);
-        boost::shared_ptr<Face> face;
+        ptr_lib::shared_ptr<ThreadsafeFace> face;
         face.reset(new ThreadsafeFace (ioService, "localhost"));
 
         // Use the system default key chain and certificate name to sign commands.
@@ -54,7 +55,15 @@ int main(int argc, char** argv)
         }
         else
         {
-            publisher.start();
+            std::thread *captureThread =
+                    new std::thread(bind(&Publisher::start,&publisher));
+
+            captureThread->detach();
+
+            LOG(INFO) << "ioservice start" << endl;
+            boost::asio::io_service::work work(ioService);
+            ioService.run();
+            LOG(INFO) << "ioservice started" << endl;
         }
         //cout << "Publisher READY" << endl;
        // Name prefix = publisher.getStreamPrefix();
@@ -72,8 +81,7 @@ int main(int argc, char** argv)
 
 
         // Keep ioService running until the Counter calls stop().
-        boost::asio::io_service::work work(ioService);
-        ioService.run();
+
     }
     catch (std::exception& e) {
         cout << "exception: " << e.what() << endl;

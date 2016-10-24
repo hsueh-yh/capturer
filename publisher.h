@@ -21,8 +21,8 @@ class Publisher //: public ptr_lib::enable_shared_from_this<Publisher>
 {
 public:
 
-    Publisher ( boost::asio::io_service& ioService,
-                boost::shared_ptr<Face> face,
+    Publisher (boost::asio::io_service& ioService,
+                ptr_lib::shared_ptr<ThreadsafeFace> face,
                 KeyChain &keyChain, const Name& certificateName );
 
     ~Publisher ();
@@ -53,6 +53,8 @@ public:
     void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix);
     // onRegisterFailed.
     //void operator()(const ptr_lib::shared_ptr<const Name>& prefix);
+    void onRegisterSuccess(const ptr_lib::shared_ptr<const Name>& prefix,
+                           uint64_t registeredPrefixId);
 
 
     ndn::Name getStreamVideoPrefix()
@@ -80,7 +82,7 @@ private:
 
     KeyChain        keyChain_;
     Name            certificateName_;
-    boost::shared_ptr<Face>       face_;
+    ptr_lib::shared_ptr<ThreadsafeFace>       face_;
     boost::asio::io_service& ioService_;
     uint64_t        registedId_;
 
@@ -89,7 +91,7 @@ private:
 
     int stat;
 
-    boost::shared_ptr<FrameBuffer> framebuffer_;
+    ptr_lib::shared_ptr<FrameBuffer> framebuffer_;
 
     Capturer capturer;
     Encoder encoder;
@@ -107,6 +109,8 @@ private:
     uint64_t    cacheSize_,
                 cachedBegin_,
                 cachedEnd_;
+
+    FrameNumber currentFrameNo_;
 };
 
 
