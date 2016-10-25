@@ -26,7 +26,7 @@ using namespace ndn;
 
 class FaceProcessor;
 
-class NdnRtcUtils {
+class NdnUtils {
 
 public:
 

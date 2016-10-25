@@ -7,8 +7,7 @@
 #include "namespacer.h"
 
 FrameBuffer::FrameBuffer(ndn::Name basePrefix) :
-    maxSegmentSize_(ndn::Face::getMaxNdnPacketSize()),
-    maxSegBlockSize_(ndn::Face::getMaxNdnPacketSize()-SegmentData::getHeaderSize()),
+    maxNdnPktSize_(ndn::Face::getMaxNdnPacketSize()-500),
     basePrefix_(basePrefix),
     bufSize_(200),
     lastPkgNo_(0),
@@ -49,15 +48,17 @@ FrameBuffer::appendData(const unsigned char* data, const unsigned int size)
 
     ptr_lib::shared_ptr<DataBlock> dataBlock;
 
-    int segNum = ceil( (double)size / (double)maxSegBlockSize_ );
-    int lastSegSize = size % maxSegBlockSize_;
+    int segNum = ceil( (double)size / (double)maxNdnPktSize_ );
+    int lastSegSize = size % maxNdnPktSize_;
 
     uint8_t nalHead = data[4];
+    if( nalHead == 0x67)
+        lastSeqNo_ = lastPkgNo_+1;
 
     int currentBlockSize;
     for( int i = 0; i < segNum; i++ )
     {
-        currentBlockSize = (i==segNum-1) ? lastSegSize : maxSegBlockSize_;
+        currentBlockSize = (i==segNum-1) ? lastSegSize : maxNdnPktSize_;
         dataBlock = getFreeSlot();
         if( !dataBlock.get() )
             LOG(ERROR) << "[FrameBuffer] RecvFrame: getFreeSlot error" << endl;
@@ -69,7 +70,7 @@ FrameBuffer::appendData(const unsigned char* data, const unsigned int size)
 //             << " ~ " << (void*)(frame.getBuf()+currentBlockSize)
 //             << endl << endl;
 
-        dataBlock->fillData(data+(i*maxSegBlockSize_),currentBlockSize);
+        dataBlock->fillData(data+(i*maxNdnPktSize_),currentBlockSize);
 
 //        cout << "Block" << i
 //             << " size=" << dataBlock->size()
@@ -84,7 +85,7 @@ FrameBuffer::appendData(const unsigned char* data, const unsigned int size)
 //            cout << hex << dataBlock->dataPtr()[i] << " " ;
 
         ndn::Name dataPrefix(basePrefix_);
-        dataPrefix.append(NdnRtcUtils::componentFromInt(++lastPkgNo_));
+        dataPrefix.append(NdnUtils::componentFromInt(++lastPkgNo_));
         std::vector<uint8_t> value;
         value.push_back(nalHead);
         dataPrefix.append(value);
@@ -97,7 +98,7 @@ FrameBuffer::appendData(const unsigned char* data, const unsigned int size)
 }
 
 ptr_lib::shared_ptr<DataBlock>
-FrameBuffer::acquireData(const ndn::Interest& interest)
+FrameBuffer::acquireData(const ndn::Interest& interest, ndn::Name::Component& nalType )
 {
     lock_guard<recursive_mutex> scopedLock(syncMutex_);
 
@@ -105,12 +106,15 @@ FrameBuffer::acquireData(const ndn::Interest& interest)
     std::map<ndn::Name, ptr_lib::shared_ptr<DataBlock> >::reverse_iterator re_iter;
     //iter = activeSlots_.find(interest.getName());
 
-    ptr_lib::shared_ptr<ndn::Name> name;
+    ndn::Name name;
     for( re_iter = activeSlots_.rbegin(); re_iter != activeSlots_.rend(); ++re_iter )
     {
         name = re_iter->first;
-        if( name->getPrefix(name->size()-2).equals(interest.getName()))
+        if( name.getPrefix(name.size()-1).equals(interest.getName()))
+        {
+            nalType = name.getComponent(-1);
             break;
+        }
     }
     if (re_iter!=activeSlots_.rend())   //if found
     {
@@ -152,7 +156,7 @@ FrameBuffer::initSlots()
     while( freeSlots_.size() <= bufSize_ )
     {
         ptr_lib::shared_ptr<DataBlock> segment;
-        segment.reset(new DataBlock(maxSegmentSize_));
+        segment.reset(new DataBlock(maxNdnPktSize_));
         freeSlots_.push_back(segment);
     }
 

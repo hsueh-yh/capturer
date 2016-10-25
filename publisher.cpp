@@ -28,7 +28,7 @@ Publisher::Publisher (boost::asio::io_service &ioService,
     cacheSize_(200),
     cachedBegin_(0),
     cachedEnd_(0),
-    currentFrameNo_(-1)
+    currentFrameNo_(0)
 
 {
     if( isBackupYUV )
@@ -64,8 +64,8 @@ Publisher::~Publisher ()
 bool
 Publisher::init()
 {
-    framebuffer_.reset(new FrameBuffer(getStreamPrefix()));
-    framebuffer_->init(100);    //default 100
+    frameBuffer_.reset(new FrameBuffer(getStreamVideoPrefix()));
+    frameBuffer_->init(100);    //default 100
     LOG(INFO) << "Register prefix " << streamPrefix_.toUri() << endl;
     registedId_ = face_->registerPrefix
           (streamPrefix_,
@@ -155,25 +155,29 @@ void Publisher::onInterest
     metaName.append(NameComponents::NameComponentStreamMetainfo);
 
     // request metaInfo
-    if( requestName.getPrefix(requestName.size()-1).equals(metaName))
+    //cout << requestName.getPrefix(metaName.size()).toUri() << endl;
+    if( requestName.getPrefix(metaName.size()).equals(metaName))
     {
-        Data data(requestName.append(NdnRtcUtils::componentFromInt(currentFrameNo_)));
+        Data data(requestName.append(NdnUtils::componentFromInt(frameBuffer_->getLastPktNo())));
         face.putData(data);
         ++responseCount_;
 
-        LOG(INFO) << "Response: MetaInfo " << requestName.toUri() << endl;
+        LOG(INFO) << "Response: MetaInfo " << requestName.toUri() << endl << endl;
         return ;
     }
 
     // data not exist
     ptr_lib::shared_ptr<DataBlock> naluData;
-    naluData = framebuffer_->acquireData( *interest.get() );
+    ndn::Name::Component nalType;
+    naluData = frameBuffer_->acquireData( *interest.get(), nalType );
 
+    FrameNumber firstPktNo, lastPktNo;
+    frameBuffer_->getCachedRange(firstPktNo, lastPktNo);
     if( !naluData )
     {
         FrameNumber start, end;
-        framebuffer_->getCachedRange(start, end);
-        cout << "No segment: " << interest->getName().toUri()
+        frameBuffer_->getCachedRange(start, end);
+        cout << "No Data: " << interest->getName().toUri()
              << " Cached frameNo: " << start << " to " << end << endl;
         //Data emptyData(requestName);
         //face.putData(emptyData);
@@ -183,6 +187,8 @@ void Publisher::onInterest
     const Blob content ( naluData->dataPtr(), naluData->size() );
 
     // Make and sign a Data packet.
+    requestName.append(nalType);
+    //requestName.append(NdnUtils::componentFromInt(lastPktNo));
     Data ndnData(requestName);
 
     ndnData.setContent( content );
@@ -261,8 +267,9 @@ Publisher::excuteCapture()
         }
         else // get NALU data
         {
-            cout << "Get 264 " << " ( size = " << outlen264 << " )" <<endl;
-            framebuffer_->appendData((const unsigned char*)outbuf264, (const unsigned int)outlen264);
+            //cout << "Get 264 " << " ( size = " << outlen264 << " )" <<endl;
+            ++currentFrameNo_;
+            frameBuffer_->appendData((const unsigned char*)outbuf264, (const unsigned int)outlen264);
 
             if( isBackup264 && fp_264 )
             {

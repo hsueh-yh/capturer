@@ -91,7 +91,7 @@ private:
 
     int stat;
 
-    ptr_lib::shared_ptr<FrameBuffer> framebuffer_;
+    ptr_lib::shared_ptr<FrameBuffer> frameBuffer_;
 
     Capturer capturer;
     Encoder encoder;

@@ -8,8 +8,8 @@
 #define WIDTH 640
 #define HEIGHT 480
 
-typedef int PacketNumber;
-typedef int SegmentNumber;
+typedef unsigned int PacketNumber;
+typedef unsigned int SegmentNumber;
 typedef PacketNumber FrameNumber;
 
 typedef unsigned char* EncodedImage;

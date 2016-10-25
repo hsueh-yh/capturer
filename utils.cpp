@@ -24,21 +24,21 @@ using namespace boost::chrono;
 
 
 
-uint32_t NdnRtcUtils::generateNonceValue()
+uint32_t NdnUtils::generateNonceValue()
 {
     uint32_t nonce = (uint32_t)std::rand();
 
     return nonce;
 }
 
-Blob NdnRtcUtils::nonceToBlob(const uint32_t nonceValue)
+Blob NdnUtils::nonceToBlob(const uint32_t nonceValue)
 {
     uint32_t beValue = htobe32(nonceValue);
     Blob b((uint8_t *)&beValue, sizeof(uint32_t));
     return b;
 }
 
-uint32_t NdnRtcUtils::blobToNonce(const ndn::Blob &blob)
+uint32_t NdnUtils::blobToNonce(const ndn::Blob &blob)
 {
     if (blob.size() < sizeof(uint32_t))
         return 0;
@@ -48,12 +48,12 @@ uint32_t NdnRtcUtils::blobToNonce(const ndn::Blob &blob)
 }
 
 
-unsigned int NdnRtcUtils::getSegmentsNumber(unsigned int segmentSize, unsigned int dataSize)
+unsigned int NdnUtils::getSegmentsNumber(unsigned int segmentSize, unsigned int dataSize)
 {
     return (unsigned int)ceil((float)dataSize/(float)segmentSize);
 }
 
-int NdnRtcUtils::segmentNumber(const Name::Component &segmentNoComponent)
+int NdnUtils::segmentNumber(const Name::Component &segmentNoComponent)
 {
     std::vector<unsigned char> bytes = *segmentNoComponent.getValue();
     int bytesLength = segmentNoComponent.getValue().size();
@@ -68,12 +68,12 @@ int NdnRtcUtils::segmentNumber(const Name::Component &segmentNoComponent)
     return result;
 }
 
-int NdnRtcUtils::frameNumber(const Name::Component &frameNoComponent)
+int NdnUtils::frameNumber(const Name::Component &frameNoComponent)
 {
-    return NdnRtcUtils::intFromComponent(frameNoComponent);
+    return NdnUtils::intFromComponent(frameNoComponent);
 }
 
-int NdnRtcUtils::intFromComponent(const Name::Component &comp)
+int NdnUtils::intFromComponent(const Name::Component &comp)
 {
     std::vector<unsigned char> bytes = *comp.getValue();
     int valueLength = comp.getValue().size();
@@ -92,7 +92,7 @@ int NdnRtcUtils::intFromComponent(const Name::Component &comp)
     return result;
 }
 
-Name::Component NdnRtcUtils::componentFromInt(unsigned int number)
+Name::Component NdnUtils::componentFromInt(unsigned int number)
 {
     stringstream ss;
 
@@ -104,21 +104,21 @@ Name::Component NdnRtcUtils::componentFromInt(unsigned int number)
 }
 
 // monotonic clock
-int64_t NdnRtcUtils::microsecondTimestamp()
+int64_t NdnUtils::microsecondTimestamp()
 {
     microseconds usec = duration_cast<microseconds>(steady_clock::now().time_since_epoch());
     return usec.count();
 }
 
 // monotonic clock
-int64_t NdnRtcUtils::nanosecondTimestamp()
+int64_t NdnUtils::nanosecondTimestamp()
 {
     boost::chrono::nanoseconds nsec = boost::chrono::steady_clock::now().time_since_epoch();
     return nsec.count();
 }
 
 // system clock
-double NdnRtcUtils::unixTimestamp()
+double NdnUtils::unixTimestamp()
 {
     auto now = boost::chrono::system_clock::now().time_since_epoch();
     boost::chrono::duration<double> sec = now;
@@ -126,7 +126,7 @@ double NdnRtcUtils::unixTimestamp()
 }
 
 // system clock
-int64_t NdnRtcUtils::millisecSinceEpoch()
+int64_t NdnUtils::millisecSinceEpoch()
 {
     milliseconds msec = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
     return msec.count();
