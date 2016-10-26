@@ -86,19 +86,21 @@ FrameBuffer::appendData(const unsigned char* data, const unsigned int size)
 
         ndn::Name dataPrefix(basePrefix_);
         dataPrefix.append(NdnUtils::componentFromInt(++lastPkgNo_));
+        dataPrefix.append(NameComponents::NameComponentNalMetainfo);
         std::vector<uint8_t> value;
         value.push_back(nalHead);
         dataPrefix.append(value);
         activeSlots_[dataPrefix] = dataBlock;
 
-
         LOG(INFO) << "[FrameBuffer] Cached " << dataPrefix.toUri()
-                  << " ( Size = " << dataBlock->size()<<" )" << endl;
+                  //<< " (" << hex << (unsigned char)(dataBlock->dataPtr()[4]) << ")"
+                  << " ( Size = " << dec << dataBlock->size()<<" )" << endl;
+        //NdnUtils::printMem("cache",dataBlock->dataPtr(),20);
     }
 }
 
 ptr_lib::shared_ptr<DataBlock>
-FrameBuffer::acquireData(const ndn::Interest& interest, ndn::Name::Component& nalType )
+FrameBuffer::acquireData(const ndn::Interest& interest, ndn::Name& nalType )
 {
     lock_guard<recursive_mutex> scopedLock(syncMutex_);
 
@@ -110,9 +112,9 @@ FrameBuffer::acquireData(const ndn::Interest& interest, ndn::Name::Component& na
     for( re_iter = activeSlots_.rbegin(); re_iter != activeSlots_.rend(); ++re_iter )
     {
         name = re_iter->first;
-        if( name.getPrefix(name.size()-1).equals(interest.getName()))
+        if( interest.getName().equals(name.getPrefix(interest.getName().size())))
         {
-            nalType = name.getComponent(-1);
+            nalType = name.getSubName(-2);
             break;
         }
     }

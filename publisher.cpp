@@ -168,7 +168,7 @@ void Publisher::onInterest
 
     // data not exist
     ptr_lib::shared_ptr<DataBlock> naluData;
-    ndn::Name::Component nalType;
+    ndn::Name nalType;
     naluData = frameBuffer_->acquireData( *interest.get(), nalType );
 
     FrameNumber firstPktNo, lastPktNo;
@@ -187,7 +187,9 @@ void Publisher::onInterest
     const Blob content ( naluData->dataPtr(), naluData->size() );
 
     // Make and sign a Data packet.
+    requestName.append(NameComponents::NameComponentNalMetainfo);
     requestName.append(nalType);
+    requestName.append(NdnUtils::componentFromInt(lastPktNo));
     //requestName.append(NdnUtils::componentFromInt(lastPktNo));
     Data ndnData(requestName);
 
@@ -207,8 +209,7 @@ void Publisher::onInterest
     ++responseCount_;
 
     LOG(INFO) << "Response: " << requestName.toUri()
-         << " ( size: "
-         << ndnData.getContent().size() << " )"
+         << " ( size: " << dec << ndnData.getContent().size() << " )"
          << endl << endl;
 
 

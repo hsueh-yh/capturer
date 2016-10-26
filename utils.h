@@ -75,6 +75,8 @@ public:
     static Blob nonceToBlob(const uint32_t nonceValue);
     static uint32_t blobToNonce(const Blob &blob);
 
+    static void printMem(char msg[], const unsigned char *startBuf, std::size_t size );
+
 };
 
 #endif /* defined(_utils_) */

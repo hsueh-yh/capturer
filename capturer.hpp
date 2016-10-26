@@ -231,6 +231,8 @@ public:
 
                     memset(outbuf, 0, height * width * 3 / 2);
 
+                    // reverse yuv
+                    ///*
                     int a = 0, i;
                     for (i = 0; i<height; i++)
                     {
@@ -247,6 +249,7 @@ public:
                         memcpy(outbuf + a, pFrameYUV->data[2] + i * pFrameYUV->linesize[2], width / 2);
                         a += width / 2;
                     }
+                    //*/
 
                     outlen = width*height * 3 / 2;
 

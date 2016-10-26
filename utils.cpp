@@ -132,3 +132,20 @@ int64_t NdnUtils::millisecSinceEpoch()
     return msec.count();
 }
 
+void NdnUtils::printMem( char msg[], const unsigned char* startBuf, std::size_t size )
+{
+    unsigned char* buf = const_cast<unsigned char*>(startBuf);
+    printf("\n[%s] size = %ld   addr:[ %p ~ %p ]\n",
+           msg, size, (void*)buf, (void*)buf+size);
+    printf("**********************************************************************\n");
+    fflush(stdout);
+    for( int i = 0; i < size; ++i )
+    {
+        printf("%X ",buf[i]);
+        fflush(stdout);
+    }
+    printf("\n**********************************************************************");
+    printf("\n[%s]-End\n\n",msg);
+    fflush(stdout);
+}
+

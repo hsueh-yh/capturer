@@ -27,7 +27,7 @@ public:
     void appendData(const unsigned char* data, const unsigned int size);
 
     ptr_lib::shared_ptr<DataBlock>
-    acquireData(const ndn::Interest& interest , ndn::Name::Component& nalType);
+    acquireData(const ndn::Interest& interest , Name &nalType);
 
     unsigned int
     getLastPktNo()
