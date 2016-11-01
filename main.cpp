@@ -1,15 +1,23 @@
 #include <cstdlib>
 #include <iostream>
-#include <time.h>
-#include <unistd.h>
+#include <string>
+#include <sstream>
+#include <thread>
+
+#include <boost/asio.hpp>
+
 #include <ndn-cpp/transport/tcp-transport.hpp>
 #include <ndn-cpp/transport/unix-transport.hpp>
-#include <boost/asio.hpp>
 #include <ndn-cpp/threadsafe-face.hpp>
-#include <thread>
+
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
 
 #include "logger.hpp"
 #include "publisher.h"
+
 
 
 #define HOST_DEFAULT "localhost"
@@ -18,26 +26,49 @@
 
 using namespace std;
 
+std::string createLogDir( const char* root )
+{
+    // get local date
+    time_t timestamp = time(NULL);
+    tm* date= localtime(&timestamp);
+
+    stringstream logDir;
+    logDir << date->tm_year + 1900;
+    logDir << "-";
+    logDir << date->tm_mon + 1;
+    logDir << "-";
+    logDir << date->tm_mday;
+    logDir << "_";
+    logDir << date->tm_hour;
+    logDir << ":";
+    logDir << date->tm_min;
+    logDir << ":";
+    logDir << date->tm_sec;
+
+    std::string logRoot("./logs/");
+    std::string logfile(logRoot);
+    logfile.append(logDir.str());
+
+    // create log dir
+    int isCreate = mkdir(logfile.c_str(), S_IRUSR | S_IWUSR | S_IXUSR | S_IRWXG | S_IRWXO);
+    if( 0 > isCreate )
+    {
+        std::cout << "Create path failed: " << logfile << std::endl;
+    }
+
+    return logfile;
+}
 
 int main(int argc, char** argv)
 {
-    char logPath[20] = "./logs";
-    GLogger glog(argv[0],logPath);
+
+    std::string logfile = createLogDir("./logs");
+    GLogger glog( argv[0], logfile.c_str() );
+    std::cout << "Log to path: " << logfile << std::endl;
 
     try {
         boost::asio::io_service ioService;
-        //ThreadsafeFace face( ioService, HOST_DEFAULT, PORT_DEFAULT );
-//        std::shared_ptr<ndn::Transport::ConnectionInfo> connInfo;
-//        std::shared_ptr<ndn::Transport> transport;
 
-//        connInfo.reset(new TcpTransport::ConnectionInfo(HOST_DEFAULT, PORT_DEFAULT));
-//        transport.reset(new TcpTransport());
-
-//        Face *face1 = new Face(transport, connInfo);
-
-
-        // The default Face will connect using a Unix socket, or to "localhost".
-        //Face face(HOST_DEFAULT,PORT_DEFAULT);
         ptr_lib::shared_ptr<ThreadsafeFace> face;
         face.reset(new ThreadsafeFace (ioService, "localhost"));
 
@@ -65,23 +96,6 @@ int main(int argc, char** argv)
             ioService.run();
             LOG(INFO) << "ioservice started" << endl;
         }
-        //cout << "Publisher READY" << endl;
-       // Name prefix = publisher.getStreamPrefix();
-
-        // TODO: After we remove the registerPrefix with the deprecated OnInterest,
-        // we can remove the explicit cast to OnInterestCallback (needed for boost).
-//        cout << face.isLocal() << endl;
-//        uint64_t registedId = 0;
-//        registedId = face.registerPrefix(prefix,
-//                            (const OnInterestCallback&)func_lib::ref(publisher),
-//                            func_lib::ref(publisher));
-//        if( registedId != 0 )
-//            cout << "Register prefix  " << prefix.toUri() << " SUCCESSFUL " << endl;
-//        publisher.start();
-
-
-        // Keep ioService running until the Counter calls stop().
-
     }
     catch (std::exception& e) {
         cout << "exception: " << e.what() << endl;

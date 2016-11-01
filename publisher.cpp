@@ -68,7 +68,7 @@ Publisher::init()
     frameBuffer_->init(100);    //default 100
     LOG(INFO) << "Register prefix " << streamPrefix_.toUri() << endl;
     registedId_ = face_->registerPrefix
-          (streamPrefix_,
+          ("/com/monitor/location1" /*streamPrefix_*/,
            (const OnInterestCallback&)bind(&Publisher::onInterest, this, _1, _2, _3, _4, _5),
            //onRegisterFailed);
            (const OnRegisterFailed&)bind(&Publisher::onRegisterFailed, this, _1),
@@ -141,13 +141,8 @@ void Publisher::onInterest
     //cout << "Got an interest..." << endl;
 
     Name requestName(interest->getName());
-//    FrameNumber frameNo;
-//    SegmentNumber segNo;
-//    Namespacer::getSegmentationNumbers(requestName,frameNo,segNo);
-
-    // not in cache
-//    if( !isCached(frameNo) )
-//        return ;
+    Name responseName(streamPrefix_);
+    responseName.append(requestName.getSubName(responseName.size()));
 
     LOG(INFO) << "Request : " << requestName.toUri() << endl;
 
@@ -155,8 +150,8 @@ void Publisher::onInterest
     metaName.append(NameComponents::NameComponentStreamMetainfo);
 
     // request metaInfo
-    //cout << requestName.getPrefix(metaName.size()).toUri() << endl;
-    if( requestName.getPrefix(metaName.size()).equals(metaName))
+    //if( requestName.getPrefix(metaName.size()).equals(metaName))
+    if( 0 <= Namespacer::findComponent(requestName,NameComponents::NameComponentStreamMetainfo))
     {
         Data data(requestName.append(NdnUtils::componentFromInt(frameBuffer_->getLastPktNo())));
         face.putData(data);
@@ -169,16 +164,15 @@ void Publisher::onInterest
     // data not exist
     ptr_lib::shared_ptr<DataBlock> naluData;
     ndn::Name nalType;
-    naluData = frameBuffer_->acquireData( *interest.get(), nalType );
+    //naluData = frameBuffer_->acquireData( *interest.get(), nalType );
+    naluData = frameBuffer_->acquireData( responseName, nalType );
 
     FrameNumber firstPktNo, lastPktNo;
     frameBuffer_->getCachedRange(firstPktNo, lastPktNo);
     if( !naluData )
     {
-        FrameNumber start, end;
-        frameBuffer_->getCachedRange(start, end);
         cout << "No Data: " << interest->getName().toUri()
-             << " Cached frameNo: " << start << " to " << end << endl;
+             << " Cached frameNo: " << firstPktNo << " to " << lastPktNo << endl;
         //Data emptyData(requestName);
         //face.putData(emptyData);
         return ;
@@ -187,7 +181,7 @@ void Publisher::onInterest
     const Blob content ( naluData->dataPtr(), naluData->size() );
 
     // Make and sign a Data packet.
-    requestName.append(NameComponents::NameComponentNalMetainfo);
+    //requestName.append(NameComponents::NameComponentNalMetainfo);
     requestName.append(nalType);
     requestName.append(NdnUtils::componentFromInt(lastPktNo));
     //requestName.append(NdnUtils::componentFromInt(lastPktNo));
@@ -197,13 +191,6 @@ void Publisher::onInterest
 
     keyChain_.sign(ndnData, certificateName_);
 
-//    unsigned int len = data.getContent().size();
-//    cout << len << endl;
-//    for( int i = 0; i < len; ++i )
-//    {
-//        printf("%X ",data.getContent().buf()[i]);
-//        fflush(stdout);
-//    }
 
     face.putData(ndnData);
     ++responseCount_;
@@ -211,14 +198,6 @@ void Publisher::onInterest
     LOG(INFO) << "Response: " << requestName.toUri()
          << " ( size: " << dec << ndnData.getContent().size() << " )"
          << endl << endl;
-
-
-
-//	for( int i = 0; i <30; i++ )
-//		printf("%2X ",data.getContent().buf()[i]);
-//	cout << endl << endl;
-
-    //fwrite(data.getContent().buf(), data.getContent().size(),1,outfp);
 }
 
 

@@ -136,7 +136,7 @@ void NdnUtils::printMem( char msg[], const unsigned char* startBuf, std::size_t 
 {
     unsigned char* buf = const_cast<unsigned char*>(startBuf);
     printf("\n[%s] size = %ld   addr:[ %p ~ %p ]\n",
-           msg, size, (void*)buf, (void*)buf+size);
+           msg, size, (void*)buf, (void*)(buf+size));
     printf("**********************************************************************\n");
     fflush(stdout);
     for( int i = 0; i < size; ++i )

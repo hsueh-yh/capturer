@@ -10,18 +10,22 @@
 class GLogger
 {
 public:
-    GLogger(char* program, char* logdir)
+    GLogger( const char* program, const char* logdir)
     {
         //google::InitGoogleLogging(program);
 
-        FLAGS_logtostderr = false;   //log messages go to stderr instead of logfiles
-        FLAGS_alsologtostderr = false;    //log messages go to stderr in addition to logfiles
-        FLAGS_colorlogtostderr=true;    //color messages logged to stderr (if supported by terminal)
+        FLAGS_logtostderr = false;      //log messages go to stderr instead of logfiles
+        FLAGS_alsologtostderr = true;    //log messages go to stderr in addition to logfiles
+        FLAGS_colorlogtostderr = true;    //color messages logged to stderr (if supported by terminal)
 
         FLAGS_log_dir = logdir;   // logger output file
-        FLAGS_stderrthreshold=google::INFO; //log messages at or above this level are copied to stderr in "
-                                            //addition to logfiles.  This flag obsoletes --alsologtostderr
+//        google::SetLogDestination(google::INFO,logdir);
+//        google::SetLogDestination(google::WARNING,logdir);
+//        google::SetLogDestination(google::GLOG_ERROR,logdir);
+        FLAGS_minloglevel = google::INFO;   //Messages logged at a lower level than this don't
+                                            //actually get logged anywhere
         FLAGS_stop_logging_if_full_disk = true;   //Stop attempting to log to disk if the disk is full
+        FLAGS_logbufsecs = 60;
 
         //FLAGS_v = 5;		//自定义VLOG(m)时，m值小于此处设置值的语句才有输出
         //FLAGS_max_log_size;     //每个日志文件最大大小（MB级别）

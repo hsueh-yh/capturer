@@ -46,7 +46,7 @@ public:
         }
 
         /* put sample parameters */
-        codeCtx->bit_rate = 400000;
+        codeCtx->bit_rate = 600000;
         /* resolution must be a multiple of two */
         codeCtx->width = 640;
         codeCtx->height = 480;

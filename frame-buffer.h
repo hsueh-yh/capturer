@@ -49,7 +49,8 @@ private:
     std::map<ndn::Name, ptr_lib::shared_ptr<DataBlock> > activeSlots_;
     ndn::Name       lastPkgName_;
     unsigned int    lastPkgNo_,
-                    lastSeqNo_;
+                    lastSeqNo_,
+                    startPkgNo_;
 
     int     maxNdnPktSize_;
 

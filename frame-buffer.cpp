@@ -46,21 +46,23 @@ FrameBuffer::appendData(const unsigned char* data, const unsigned int size)
     lock_guard<recursive_mutex> scopedLock(syncMutex_);
     //fwrite(frame.getFrameData(),1,frame.getDataBlockSize(),fp);
 
-    ptr_lib::shared_ptr<DataBlock> dataBlock;
+    ptr_lib::shared_ptr<DataBlock> dataBlockSlot;
 
     int segNum = ceil( (double)size / (double)maxNdnPktSize_ );
-    int lastSegSize = size % maxNdnPktSize_;
+    unsigned int lastSegSize = size % maxNdnPktSize_;
+    if( 0 == lastSegSize )
+        lastSegSize = maxNdnPktSize_;
 
     uint8_t nalHead = data[4];
     if( nalHead == 0x67)
         lastSeqNo_ = lastPkgNo_+1;
 
     int currentBlockSize;
-    for( int i = 0; i < segNum; i++ )
+    for( int i = 0; i < segNum; ++i )
     {
         currentBlockSize = (i==segNum-1) ? lastSegSize : maxNdnPktSize_;
-        dataBlock = getFreeSlot();
-        if( !dataBlock.get() )
+        dataBlockSlot = getFreeSlot();
+        if( !dataBlockSlot.get() )
             LOG(ERROR) << "[FrameBuffer] RecvFrame: getFreeSlot error" << endl;
 
 
@@ -70,7 +72,7 @@ FrameBuffer::appendData(const unsigned char* data, const unsigned int size)
 //             << " ~ " << (void*)(frame.getBuf()+currentBlockSize)
 //             << endl << endl;
 
-        dataBlock->fillData(data+(i*maxNdnPktSize_),currentBlockSize);
+        dataBlockSlot->fillData(data+(i*maxNdnPktSize_),currentBlockSize);
 
 //        cout << "Block" << i
 //             << " size=" << dataBlock->size()
@@ -90,11 +92,16 @@ FrameBuffer::appendData(const unsigned char* data, const unsigned int size)
         std::vector<uint8_t> value;
         value.push_back(nalHead);
         dataPrefix.append(value);
-        activeSlots_[dataPrefix] = dataBlock;
+        activeSlots_[dataPrefix] = dataBlockSlot;
+
+        LOG_IF(ERROR, dataBlockSlot->size()<=0)
+                << "[FrameBuffer] Cached ERROR " << dataPrefix.toUri()
+                << " seg:"<< i << " Num:" << segNum
+                << " ( Size = " << dec << currentBlockSize<<" of " << size << " )" << endl;
 
         LOG(INFO) << "[FrameBuffer] Cached " << dataPrefix.toUri()
-                  //<< " (" << hex << (unsigned char)(dataBlock->dataPtr()[4]) << ")"
-                  << " ( Size = " << dec << dataBlock->size()<<" )" << endl;
+                  << " (" << i << "-" << segNum
+                  << ") [" << dec << dataBlockSlot->size()<<"-" << size << "]" << endl;
         //NdnUtils::printMem("cache",dataBlock->dataPtr(),20);
     }
 }
@@ -129,12 +136,8 @@ FrameBuffer::acquireData(const ndn::Interest& interest, ndn::Name& nalType )
 void
 FrameBuffer::getCachedRange(FrameNumber& start, FrameNumber& end)
 {
-    std::map<ndn::Name, ptr_lib::shared_ptr<DataBlock> >::iterator istart, iend;
-    istart = activeSlots_.begin();
-    iend= activeSlots_.end();
-    iend--;
-    Namespacer::getFrameNumber(istart->first,start);
-    Namespacer::getFrameNumber(iend->first,end);
+    start = startPkgNo_;
+    end = lastPkgNo_;
 }
 
 //protected functions
@@ -184,6 +187,7 @@ FrameBuffer::getFreeSlot()
         segment = (it)->second;
         ndn::Name name(it->first);
         activeSlots_.erase(it);
+        startPkgNo_ += 1;
 //        LOG(INFO) << "[FrameBuffer] getFree Slot left = " << freeSlots_.size()
 //                  << " active = " << activeSlots_.size() << endl;
 //        LOG(INFO) << "[FrameBuffer] getFree Slot EREASE " << name.toUri()
