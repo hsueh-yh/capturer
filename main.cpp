@@ -28,6 +28,20 @@ using namespace std;
 
 std::string createLogDir( const char* root )
 {
+    fstream rootfile;
+    rootfile.open(root, ios::in);
+    if(!rootfile)
+    {
+        std::cout << "Create log dir " << root << std::endl;
+        int isCreate = mkdir(root, S_IRUSR | S_IWUSR | S_IXUSR | S_IRWXG | S_IRWXO);
+        if( 0 > isCreate )
+        {
+            std::cout << "Create log dir failed: " << root << std::endl;
+        }
+    }
+    else
+        rootfile.close();
+
     // get local date
     time_t timestamp = time(NULL);
     tm* date= localtime(&timestamp);
@@ -58,6 +72,7 @@ std::string createLogDir( const char* root )
 
     return logfile;
 }
+
 
 int main(int argc, char** argv)
 {
