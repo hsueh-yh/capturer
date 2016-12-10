@@ -274,6 +274,73 @@ public:
         return 0;
     }
 
+    int capture( AVFrame &outbuf )
+    {
+        int ret, got_picture;
+
+        if(av_read_frame(pFormatCtx, packet)>=0)
+        {
+            if(packet->stream_index==videoindex)
+            {
+                ret = avcodec_decode_video2(pCodecCtx, pFrame, &got_picture, packet);
+                if(ret < 0)
+                {
+                    printf("Decode Error.\n");
+                    return -1;
+                }
+                if(got_picture)
+                {
+                    sws_scale(img_convert_ctx, (const unsigned char* const*)pFrame->data,
+                              pFrame->linesize, 0, pCodecCtx->height,
+                              pFrameYUV->data, pFrameYUV->linesize);
+                    int width = pCodecCtx->width;
+                    int height = pCodecCtx->height;
+
+                    memset(outbuf, 0, height * width * 3 / 2);
+
+                    // reverse yuv
+                    ///*
+                    int a = 0, i;
+                    for (i = 0; i<height; i++)
+                    {
+                        memcpy(outbuf + a, pFrameYUV->data[0] + i * pFrameYUV->linesize[0], width);
+                        a += width;
+                    }
+                    for (i = 0; i<height / 2; i++)
+                    {
+                        memcpy(outbuf + a, pFrameYUV->data[1] + i * pFrameYUV->linesize[1], width / 2);
+                        a += width / 2;
+                    }
+                    for (i = 0; i<height / 2; i++)
+                    {
+                        memcpy(outbuf + a, pFrameYUV->data[2] + i * pFrameYUV->linesize[2], width / 2);
+                        a += width / 2;
+                    }
+                    //*/
+
+                    outlen = width*height * 3 / 2;
+
+
+                    if( backup)
+                    {
+                        saveFrame(pFrameYUV, pCodecCtx->width, pCodecCtx->height);
+                    }
+
+                }//if(got_picture)
+
+            }//if(packet->stream_index==videoindex)
+            else
+            {
+                outlen = 0;
+            }
+
+            av_packet_unref(packet);
+
+        }//if(av_read_frame(pFormatCtx, packet)>=0)
+
+        return 0;
+    }
+
     void saveFrame(AVFrame *pFrameYUV, int width, int height)
     {
         if( flg)
