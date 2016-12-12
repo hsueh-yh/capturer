@@ -1,0 +1,13 @@
+*
+!.gitignore
+!README
+!*.h
+!*.hpp
+!*.c
+!*.cpp
+
+!CMakeLists.txt
+
+!/include/
+!/src/
+!/client/
