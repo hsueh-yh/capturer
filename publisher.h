@@ -103,6 +103,8 @@ private:
     unsigned char* outbuf264 = NULL;
     int outlen264 = 0;
 
+    AVFrame *frame;
+
     bool isBackupYUV, isBackup264;
     FILE *fp_yuv, *fp_264;
 

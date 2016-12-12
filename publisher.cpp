@@ -31,6 +31,7 @@ Publisher::Publisher (boost::asio::io_service &ioService,
     currentFrameNo_(0)
 
 {
+    frame = av_frame_alloc();
     if( isBackupYUV )
     {
         fp_yuv = fopen ( "backup.yuv", "wb+" );
@@ -225,9 +226,11 @@ Publisher::view()
 void
 Publisher::excuteCapture()
 {
-    capturer.getFrame(outbufYUV,outlenYUV);
+    //capturer.getFrame(outbufYUV,outlenYUV);
 
-    if( outlenYUV == 0 )
+    capturer.getFrame(*frame);
+
+    if( 0 )
     {
         LOG(WARNING) << "Capturer fail" << endl;
         return ;
@@ -240,7 +243,7 @@ Publisher::excuteCapture()
             fwrite(outbufYUV,1,outlenYUV,fp_yuv);
 
         // encode
-        encoder.getFrame(outbufYUV, outlenYUV, outbuf264, outlen264);
+        encoder.getFrame(*frame, outbuf264, outlen264);
         if (outlen264 == 0)
         {
             //cout << "NO 264" << endl;

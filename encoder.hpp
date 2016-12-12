@@ -106,6 +106,10 @@ public:
     {
         return encode( inbuf, inlen, outbuf, outlen );
     }
+    int getFrame( AVFrame &frame, unsigned char* outbuf, int &outlen )
+    {
+        return encode( frame, outbuf, outlen );
+    }
 
     DataBlock* getExtradata()
     {
@@ -167,6 +171,32 @@ private:
         frameYUV->pts = ++frameNo_;
 
         ret = avcodec_encode_video2(codeCtx, &avpkt, frameYUV, &got_output);
+
+        if (ret < 0) {
+            cout << ret << endl;
+            fprintf(stderr, "Error encoding frame\n");
+            //exit(1);
+        }
+
+        if (got_output) {
+            //printf("Write frame %3d (size=%5d)\n", frameNo, avpkt.size);
+            outlen = avpkt.size;
+            memcpy(outbuf,avpkt.data,outlen);
+            if(backup)
+                fwrite(avpkt.data, 1, avpkt.size, file);
+            av_packet_unref(&avpkt);
+        }
+
+        //flushEncoder();
+    }
+
+    int encode( AVFrame &frame, unsigned char* outbuf, int &outlen )
+    {
+        av_init_packet(&avpkt);
+        avpkt.data = NULL;    // packet data will be allocated by the encoder
+        avpkt.size = 0;
+
+        ret = avcodec_encode_video2(codeCtx, &avpkt, &frame, &got_output);
 
         if (ret < 0) {
             cout << ret << endl;
