@@ -9,8 +9,8 @@
 
 #include "common.h"
 #include "name-components.h"
-#include "capturer.hpp"
-#include "encoder.hpp"
+#include "capturer.h"
+#include "encoder.h"
 #include "frame-buffer.h"
 
 using namespace ndn;

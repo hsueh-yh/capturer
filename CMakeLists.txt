@@ -9,10 +9,34 @@ add_definitions(-g -W -Wall -std=c++11 -fPIC -DTIXML_USE_STL)
 
 
 ############source files############
-aux_source_directory(. SRC_LIST)
+set(SRC_LIST
+capturer.cpp
+encoder.cpp
+frame-buffer.cpp
+frame-data.cpp
+main.cpp
+name-components.cpp
+namespacer.cpp
+publisher.cpp
+utils.cpp
+)
+
+set(INCLUDE_LIST
+capturer.h
+common.h
+encoder.h
+frame-buffer.h
+frame-data.h
+name-components.h
+namespacer.h
+publisher.h
+utils.h
+)
+
+#aux_source_directory(./ SRC_LIST)
+#aux_source_directory(. SRC_LIST)
 #add_subdirectory(subsrc)
-include_directories(include)    #head file path
-include_directories(/usr/local/include/)
+include_directories(./)    #head file path
 
 ############generate binary files############
 set(LIBRARY_OUTPUT_PATH ./)

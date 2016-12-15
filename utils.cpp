@@ -104,6 +104,13 @@ Name::Component NdnUtils::componentFromInt(unsigned int number)
 }
 
 // monotonic clock
+int64_t NdnUtils::millisecondTimestamp()
+{
+    milliseconds msec = duration_cast<milliseconds>(steady_clock::now().time_since_epoch());
+    return msec.count();
+}
+
+// monotonic clock
 int64_t NdnUtils::microsecondTimestamp()
 {
     microseconds usec = duration_cast<microseconds>(steady_clock::now().time_since_epoch());

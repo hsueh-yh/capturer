@@ -31,7 +31,6 @@ Publisher::Publisher (boost::asio::io_service &ioService,
     currentFrameNo_(0)
 
 {
-    frame = av_frame_alloc();
     if( isBackupYUV )
     {
         fp_yuv = fopen ( "backup.yuv", "wb+" );
@@ -148,11 +147,11 @@ void Publisher::onInterest
     LOG(INFO) << "Request : " << requestName.toUri() << endl;
 
     ndn::Name metaName(streamPrefix_);
-    metaName.append(NameComponents::NameComponentStreamMetainfo);
+    metaName.append(NameComponents::NameComponentStreamMetaIdx);
 
     // request metaInfo
     //if( requestName.getPrefix(metaName.size()).equals(metaName))
-    if( 0 <= Namespacer::findComponent(requestName,NameComponents::NameComponentStreamMetainfo))
+    if( 0 <= Namespacer::findComponent(requestName,NameComponents::NameComponentStreamMetaIdx))
     {
         Data data(requestName.append(NdnUtils::componentFromInt(frameBuffer_->getLastPktNo())));
         face.putData(data);
@@ -181,8 +180,7 @@ void Publisher::onInterest
 
     const Blob content ( naluData->dataPtr(), naluData->size() );
 
-    // Make and sign a Data packet.
-    //requestName.append(NameComponents::NameComponentNalMetainfo);
+    requestName.append(NameComponents::NameComponentNalIdx);
     requestName.append(nalType);
     requestName.append(NdnUtils::componentFromInt(lastPktNo));
     //requestName.append(NdnUtils::componentFromInt(lastPktNo));
@@ -226,11 +224,10 @@ Publisher::view()
 void
 Publisher::excuteCapture()
 {
-    //capturer.getFrame(outbufYUV,outlenYUV);
+    int64_t millisecondTimestamp;
+    capturer.getFrame(outbufYUV,outlenYUV,millisecondTimestamp);
 
-    capturer.getFrame(*frame);
-
-    if( 0 )
+    if( outlenYUV == 0 )
     {
         LOG(WARNING) << "Capturer fail" << endl;
         return ;
@@ -243,7 +240,7 @@ Publisher::excuteCapture()
             fwrite(outbufYUV,1,outlenYUV,fp_yuv);
 
         // encode
-        encoder.getFrame(*frame, outbuf264, outlen264);
+        encoder.getFrame(outbufYUV, outlenYUV, outbuf264, outlen264);
         if (outlen264 == 0)
         {
             //cout << "NO 264" << endl;
@@ -252,7 +249,7 @@ Publisher::excuteCapture()
         {
             //cout << "Get 264 " << " ( size = " << outlen264 << " )" <<endl;
             ++currentFrameNo_;
-            frameBuffer_->appendData((const unsigned char*)outbuf264, (const unsigned int)outlen264);
+            frameBuffer_->appendData((const unsigned char*)outbuf264, (const unsigned int)outlen264,millisecondTimestamp);
 
             if( isBackup264 && fp_264 )
             {
@@ -263,9 +260,3 @@ Publisher::excuteCapture()
     //cout << endl;
 }
 
-
-static void
-onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
-{
-  cout << "Register failed for prefix " << prefix->toUri() << endl;
-}

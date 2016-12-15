@@ -24,7 +24,7 @@ public:
 
     void init( int frameNumbers = 100 );
 
-    void appendData(const unsigned char* data, const unsigned int size);
+    void appendData(const unsigned char* data, const unsigned int size, int64_t millisecondTimestamp);
 
     ptr_lib::shared_ptr<DataBlock>
     acquireData(const ndn::Interest& interest , Name &nalType);

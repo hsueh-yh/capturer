@@ -5,6 +5,7 @@
 #include "utils.h"
 #include "name-components.h"
 #include "namespacer.h"
+#include <sstream>
 
 FrameBuffer::FrameBuffer(ndn::Name basePrefix) :
     maxNdnPktSize_(ndn::Face::getMaxNdnPacketSize()-500),
@@ -41,7 +42,7 @@ FrameBuffer::init(int frameNumbers)
 }
 
 void
-FrameBuffer::appendData(const unsigned char* data, const unsigned int size)
+FrameBuffer::appendData(const unsigned char* data, const unsigned int size, int64_t millisecondTimestamp)
 {
     lock_guard<recursive_mutex> scopedLock(syncMutex_);
     //fwrite(frame.getFrameData(),1,frame.getDataBlockSize(),fp);
@@ -65,33 +66,40 @@ FrameBuffer::appendData(const unsigned char* data, const unsigned int size)
         if( !dataBlockSlot.get() )
             LOG(ERROR) << "[FrameBuffer] RecvFrame: getFreeSlot error" << endl;
 
-
-//        cout <<"Segme: " << i
-//             << " size=" << currentBlockSize
-//             << " data: " << (void*)frame.getBuf()+(i*maxSegBlockSize_)
-//             << " ~ " << (void*)(frame.getBuf()+currentBlockSize)
-//             << endl << endl;
+        /*
+        cout <<"Segme: " << i
+             << " size=" << currentBlockSize
+             << " data: " << (void*)frame.getBuf()+(i*maxSegBlockSize_)
+             << " ~ " << (void*)(frame.getBuf()+currentBlockSize)
+             << endl << endl;
+        */
 
         dataBlockSlot->fillData(data+(i*maxNdnPktSize_),currentBlockSize);
 
-//        cout << "Block" << i
-//             << " size=" << dataBlock->size()
-//             << " data: " << (void*)dataBlock->dataPtr()
-//             << " ~ " << (void*)(dataBlock->dataPtr()+dataBlock->size())
-//             << endl << endl;
-//        cout << "Rcev frame size = " << dataBlock->size()
-//             << " data: " << (void*)dataBlock->dataPtr()
-//             << " ~ " << (void*)(dataBlock->dataPtr()+dataBlock->size())
-//             << endl << endl << endl;
-//        for( int i = 0; i< dataBlock->size(); ++i )
-//            cout << hex << dataBlock->dataPtr()[i] << " " ;
+        /*
+        cout << "Block" << i
+             << " size=" << dataBlock->size()
+             << " data: " << (void*)dataBlock->dataPtr()
+             << " ~ " << (void*)(dataBlock->dataPtr()+dataBlock->size())
+             << endl << endl;
+        cout << "Rcev frame size = " << dataBlock->size()
+             << " data: " << (void*)dataBlock->dataPtr()
+             << " ~ " << (void*)(dataBlock->dataPtr()+dataBlock->size())
+             << endl << endl << endl;
+        for( int i = 0; i< dataBlock->size(); ++i )
+            cout << hex << dataBlock->dataPtr()[i] << " " ;
+        */
 
         ndn::Name dataPrefix(basePrefix_);
         dataPrefix.append(NdnUtils::componentFromInt(++lastPkgNo_));
-        dataPrefix.append(NameComponents::NameComponentNalMetainfo);
+        dataPrefix.append(NameComponents::NameComponentNalIdx);
         std::vector<uint8_t> value;
         value.push_back(nalHead);
         dataPrefix.append(value);
+        stringstream ss;
+        ss << millisecondTimestamp;
+        string str = ss.str();
+        dataPrefix.append(str);
         activeSlots_[dataPrefix] = dataBlockSlot;
 
         LOG_IF(ERROR, dataBlockSlot->size()<=0)
