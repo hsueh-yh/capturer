@@ -21,9 +21,10 @@ class Publisher //: public ptr_lib::enable_shared_from_this<Publisher>
 {
 public:
 
-    Publisher (boost::asio::io_service& ioService,
-                ptr_lib::shared_ptr<ThreadsafeFace> face,
-                KeyChain &keyChain, const Name& certificateName );
+    Publisher (const string streamName,
+               boost::asio::io_service& ioService,
+               ptr_lib::shared_ptr<ThreadsafeFace> face,
+               KeyChain &keyChain, const Name &certificateName);
 
     ~Publisher ();
 
