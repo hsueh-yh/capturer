@@ -76,7 +76,14 @@ std::string createLogDir( const char* root )
 
 int main(int argc, char** argv)
 {
-
+    std::string streamName = "/com/monitor/location1/stream";
+    if( argc == 1 )
+        streamName.append("0");
+    else
+    {
+        streamName.append(argv[1]);
+    }
+    //std::cout << streamName << std::endl;
     std::string logfile = createLogDir("./logs");
     GLogger glog( argv[0], logfile.c_str() );
     std::cout << "Log to path: " << logfile << std::endl;
@@ -92,7 +99,8 @@ int main(int argc, char** argv)
         face->setCommandSigningInfo(keyChain, keyChain.getDefaultCertificateName());
 
         // Also use the default certificate name to sign data packets.
-        Publisher publisher(ioService, face, keyChain, keyChain.getDefaultCertificateName());
+        Publisher publisher(streamName, ioService, face, keyChain,
+                            keyChain.getDefaultCertificateName() );
 
         if( !publisher.init() )
         {

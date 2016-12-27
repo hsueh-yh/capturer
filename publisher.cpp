@@ -10,10 +10,11 @@ using namespace std::placeholders;
 
 #define REQUEST_FIRST_FRAME_ 0
 
-Publisher::Publisher (boost::asio::io_service &ioService,
+Publisher::Publisher (const string streamName,
+                      boost::asio::io_service& ioService,
                       ptr_lib::shared_ptr<ThreadsafeFace> face,
-                      KeyChain &keyChain, const Name& certificateName ) :
-    streamPrefix_("/com/monitor/location1/stream0"),
+                      KeyChain &keyChain, const Name &certificateName) :
+    streamPrefix_(streamName),
     ioService_(ioService),
     face_(face),
     keyChain_ ( keyChain ),
@@ -105,7 +106,7 @@ Publisher::start()
     while( 1 )
     {
         excuteCapture( /*++currentFrameNo_*/ );
-        usleep(30000);
+        usleep(25000);
     }
     stop();
 }
