@@ -15,6 +15,7 @@ encoder.cpp
 frame-buffer.cpp
 frame-data.cpp
 main.cpp
+manager.cpp
 name-components.cpp
 namespacer.cpp
 publisher.cpp
@@ -27,8 +28,11 @@ common.h
 encoder.h
 frame-buffer.h
 frame-data.h
+interfaces.h
+manager.h
 name-components.h
 namespacer.h
+params.h
 publisher.h
 utils.h
 )
