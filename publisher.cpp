@@ -3,16 +3,20 @@
 #include "publisher.h"
 #include "name-components.h"
 #include "namespacer.h"
-#include "logger.hpp"
-#include "utils.h"
+#include "glogger.h"
+//#include "utils.h"
+#include "mtndn-utils.h"
+#include <thread>
 
-using namespace std::placeholders;
+//using namespace std::placeholders;
+using namespace func_lib;
 
 #define REQUEST_FIRST_FRAME_ 0
 
+/*
 Publisher::Publisher (const string streamName,
                       boost::asio::io_service& ioService,
-                      ptr_lib::shared_ptr<ThreadsafeFace> face,
+                      ptr_lib::shared_ptr<FaceWrapper> face,
                       KeyChain &keyChain, const Name &certificateName) :
     streamPrefix_(streamName),
     ioService_(ioService),
@@ -47,6 +51,37 @@ Publisher::Publisher (const string streamName,
 
     LOG(INFO) << "Publisher Constructor DONE." << endl;
 }
+*/
+
+Publisher::Publisher(const GeneralParams &generalParams):
+    generalParams_(generalParams),
+    registedId_(0),
+    responseCount_ ( 0 ),
+    requestCounter_(0),
+    fp_yuv(NULL),
+    fp_264(NULL),
+    isBackupYUV(false),
+    isBackup264(false),
+    cacheSize_(200),
+    cachedBegin_(0),
+    cachedEnd_(0),
+    currentFrameNo_(0)
+{
+    if( isBackupYUV )
+    {
+        fp_yuv = fopen ( "backup.yuv", "wb+" );
+        if ( fp_yuv == NULL )
+            LOG(INFO) << "Open file backup.yuv error!" << endl;
+    }
+    if( isBackup264 )
+    {
+        fp_264 = fopen ( "backup.264", "wb+" );
+        if ( fp_264 == NULL )
+            LOG(INFO) << "Open file backup.264 error!" << endl;
+    }
+
+    LOG(INFO) << "Publisher Constructor DONE." << endl;
+}
 
 
 Publisher::~Publisher ()
@@ -62,18 +97,33 @@ Publisher::~Publisher ()
 }
 
 
-bool
-Publisher::init()
+int
+Publisher::init(const PublisherSettings &settings, const MediaThreadParams* videoThreadParams)
 {
-    frameBuffer_.reset(new FrameBuffer(getStreamVideoPrefix()));
+    settings_ = settings;
+    face_ = settings_.faceProcessor_->getFaceWrapper();
+
+    frameBuffer_.reset(new FrameBuffer(getStreamName()));
     frameBuffer_->init(100);    //default 100
-    LOG(INFO) << "Register prefix " << streamPrefix_.toUri() << endl;
-    registedId_ = face_->registerPrefix
-          ("/com/monitor/location1" /*streamPrefix_*/,
-           (const OnInterestCallback&)bind(&Publisher::onInterest, this, _1, _2, _3, _4, _5),
-           //onRegisterFailed);
-           (const OnRegisterFailed&)bind(&Publisher::onRegisterFailed, this, _1),
-           (const OnRegisterSuccess&)bind(&Publisher::onRegisterSuccess, this, _1,_2) );
+
+    LOG(INFO) << "Register prefix " << getStreamName() << endl;
+    registedId_ = face_->registerPrefix(
+                getStreamName(),
+                (const OnInterestCallback&)func_lib::bind(
+                                                   &Publisher::onInterest,
+                                                   this,
+                                                   func_lib::_1,
+                                                   func_lib::_2,
+                                                   func_lib::_3,
+                                                   func_lib::_4,
+                                                   func_lib::_5),
+                (const OnRegisterFailed&)func_lib::bind(&Publisher::onRegisterFailed,
+                                                         this,
+                                                         func_lib::_1)/*,
+                (const OnRegisterSuccess&)bind(&Publisher::onRegisterSuccess,
+                                              this,
+                                              std::placeholders::_1,
+                                              std::placeholders::_2)*/ );
 
     if( registedId_ != 0 )
     {
@@ -84,52 +134,45 @@ Publisher::init()
         LOG(INFO) << "Register prefix FAILED ( ID = " << registedId_ << " )" << endl;
     }
 
-    LOG(INFO) << "Capturer initialize " << endl;
-    capturer.init();
-    capturer.start();
-
-    LOG(INFO) << "Encoder initialize " << endl;
-    encoder.init(AV_CODEC_ID_H264);
-    outbufYUV = (unsigned char*) malloc (width*height*3/2);
-
-    outbuf264 = (unsigned char*) malloc (width*height*3/2);
-
-    stat = 1;
     LOG(INFO) << "Publisher initialize DONE" << endl;
+
+    return RESULT_OK;
 }
 
 int
 Publisher::start()
 {
-    unsigned int i = -1;
-    LOG(INFO) << "[Publisher] Start " << std::endl;
-    while( 1 )
-    {
-        excuteCapture( /*++currentFrameNo_*/ );
-        usleep(25000);
-    }
-    stop();
 }
 
 int
 Publisher::stop()
 {
     LOG(INFO) << "[Publisher] Stop" << std::endl;
-    face_->removeRegisteredPrefix(registedId_);
-    ioService_.stop();
+    face_->unregisterPrefix(registedId_);
+    //ioService_.stop();
 
     if(isBackupYUV)
         fclose(fp_yuv);
     if (isBackup264)
         fclose(fp_264);
-
-    encoder.stop();
-    capturer.stop();
-
-    stat = 0;
 }
 
 
+////////////////////////////////////////////////////////////////
+// onInterest.
+void
+Publisher::onInterest(
+        const ptr_lib::shared_ptr<const Name>& prefix,
+        const ptr_lib::shared_ptr<const Interest>& interest,
+        Face& face,
+        uint64_t interestFilterId,
+        const ptr_lib::shared_ptr<const InterestFilter>& filter )
+{
+    LOG(INFO) << "RCVE " << prefix->toUri() << endl;
+}
+
+
+/*
 // onInterest.
 void Publisher::onInterest
                       ( const ptr_lib::shared_ptr<const Name>& prefix,
@@ -154,7 +197,7 @@ void Publisher::onInterest
     //if( requestName.getPrefix(metaName.size()).equals(metaName))
     if( 0 <= Namespacer::findComponent(requestName,NameComponents::NameComponentStreamMetaIdx))
     {
-        Data data(requestName.append(NdnUtils::componentFromInt(frameBuffer_->getLastPktNo())));
+        Data data(requestName.append(MtNdnUtils::componentFromInt(frameBuffer_->getLastPktNo())));
         face.putData(data);
         ++responseCount_;
 
@@ -183,8 +226,8 @@ void Publisher::onInterest
 
     requestName.append(NameComponents::NameComponentNalIdx);
     requestName.append(nalType);
-    requestName.append(NdnUtils::componentFromInt(lastPktNo));
-    //requestName.append(NdnUtils::componentFromInt(lastPktNo));
+    requestName.append(MtNdnUtils::componentFromInt(lastPktNo));
+    //requestName.append(MtNdnUtils::componentFromInt(lastPktNo));
     Data ndnData(requestName);
 
     ndnData.setContent( content );
@@ -199,7 +242,7 @@ void Publisher::onInterest
          << " ( size: " << dec << ndnData.getContent().size() << " )"
          << endl << endl;
 }
-
+*/
 
 // onRegisterFailed.
 void
@@ -215,49 +258,3 @@ Publisher::onRegisterSuccess(const ptr_lib::shared_ptr<const Name>& prefix,
 {
     LOG(INFO) << "onRegister Success " << prefix->toUri() << " " << registeredPrefixId << endl;
 }
-//protected functions
-//**************************************************
-
-void
-Publisher::view()
-{}
-
-void
-Publisher::excuteCapture()
-{
-    int64_t millisecondTimestamp;
-    capturer.getFrame(outbufYUV,outlenYUV,millisecondTimestamp);
-
-    if( outlenYUV == 0 )
-    {
-        LOG(WARNING) << "Capturer fail" << endl;
-        return ;
-    }
-    // get YUV frame
-    else
-    {
-        //cout << "Get YUV " <<endl;
-        if(isBackupYUV && fp_yuv )
-            fwrite(outbufYUV,1,outlenYUV,fp_yuv);
-
-        // encode
-        encoder.getFrame(outbufYUV, outlenYUV, outbuf264, outlen264);
-        if (outlen264 == 0)
-        {
-            //cout << "NO 264" << endl;
-        }
-        else // get NALU data
-        {
-            //cout << "Get 264 " << " ( size = " << outlen264 << " )" <<endl;
-            ++currentFrameNo_;
-            frameBuffer_->appendData((const unsigned char*)outbuf264, (const unsigned int)outlen264,millisecondTimestamp);
-
-            if( isBackup264 && fp_264 )
-            {
-                fwrite(outbuf264,1,outlen264,fp_264);
-            }
-        }
-    }//else
-    //cout << endl;
-}
-

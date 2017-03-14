@@ -7,11 +7,13 @@
 #include "namespacer.h"
 #include <sstream>
 
-FrameBuffer::FrameBuffer(ndn::Name basePrefix) :
+FrameBuffer::FrameBuffer(std::string basePrefix) :
     maxNdnPktSize_(ndn::Face::getMaxNdnPacketSize()-500),
     basePrefix_(basePrefix),
     bufSize_(200),
+    startPkgNo_(0),
     lastPkgNo_(0),
+    lastSeqNo_(0),
     isbackup(false)
 {
     init();
@@ -44,7 +46,7 @@ FrameBuffer::init(int frameNumbers)
 void
 FrameBuffer::appendData(const unsigned char* data, const unsigned int size, int64_t millisecondTimestamp)
 {
-    lock_guard<recursive_mutex> scopedLock(syncMutex_);
+    ptr_lib::lock_guard<ptr_lib::recursive_mutex> scopedLock(syncMutex_);
     //fwrite(frame.getFrameData(),1,frame.getDataBlockSize(),fp);
 
     ptr_lib::shared_ptr<DataBlock> dataBlockSlot;
@@ -91,7 +93,7 @@ FrameBuffer::appendData(const unsigned char* data, const unsigned int size, int6
         */
 
         ndn::Name dataPrefix(basePrefix_);
-        dataPrefix.append(NdnUtils::componentFromInt(++lastPkgNo_));
+        dataPrefix.append(MtNdnUtils::componentFromInt(++lastPkgNo_));
         dataPrefix.append(NameComponents::NameComponentNalIdx);
         std::vector<uint8_t> value;
         value.push_back(nalHead);
@@ -107,17 +109,19 @@ FrameBuffer::appendData(const unsigned char* data, const unsigned int size, int6
                 << " seg:"<< i << " Num:" << segNum
                 << " ( Size = " << dec << currentBlockSize<<" of " << size << " )" << endl;
 
+        /*
         LOG(INFO) << "[FrameBuffer] Cached " << dataPrefix.toUri()
                   << " (" << i << "-" << segNum
                   << ") [" << dec << dataBlockSlot->size()<<"-" << size << "]" << endl;
+        //*/
         //NdnUtils::printMem("cache",dataBlock->dataPtr(),20);
     }
 }
 
 ptr_lib::shared_ptr<DataBlock>
-FrameBuffer::acquireData(const ndn::Interest& interest, ndn::Name& nalType )
+FrameBuffer::acquireData(const ndn::Name& prefix, ndn::Name& nalType )
 {
-    lock_guard<recursive_mutex> scopedLock(syncMutex_);
+    ptr_lib::lock_guard<ptr_lib::recursive_mutex> scopedLock(syncMutex_);
 
     ptr_lib::shared_ptr<DataBlock> data;
     std::map<ndn::Name, ptr_lib::shared_ptr<DataBlock> >::reverse_iterator re_iter;
@@ -127,7 +131,7 @@ FrameBuffer::acquireData(const ndn::Interest& interest, ndn::Name& nalType )
     for( re_iter = activeSlots_.rbegin(); re_iter != activeSlots_.rend(); ++re_iter )
     {
         name = re_iter->first;
-        if( interest.getName().equals(name.getPrefix(interest.getName().size())))
+        if( prefix.equals(name.getPrefix(prefix.size())))
         {
             nalType = name.getSubName(-2);
             break;

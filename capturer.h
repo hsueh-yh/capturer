@@ -5,6 +5,8 @@
 #include <iostream>
 #include <string>
 
+#include "interfaces.h"
+
 using namespace std;
 
 
@@ -22,14 +24,16 @@ extern "C"
 }
 #endif
 
+#include <vector>
 
-class Capturer
+
+class FFCapturer: public IExternalCapturer
 {
 public:
 
 
-    Capturer();
-    ~Capturer();
+    FFCapturer();
+    ~FFCapturer();
 
     int init();
 
@@ -40,6 +44,10 @@ public:
     int getFrame( AVFrame &frame );
 
     int stop();
+
+    void* getFrameBuf();
+
+    int incomingYUV420Frame(void* frameObj, int64_t &captureTsMs);
 
 
 //private:
@@ -55,6 +63,7 @@ public:
 
     unsigned char *out_buffer;
     AVFrame *pFrameYUV;
+    std::vector<AVFrame*> avframesMap_;
 
 
     FILE *fp_yuv;
@@ -71,7 +80,7 @@ public:
     bool openDevice();
     bool initEncoder();
     int capture(unsigned char *outbuf, int &outlen , int64_t &millisecondTimestamp);
-    int capture( AVFrame &ourFrame );
+    int capture( void* frameObj, int64_t &captureTsMs );
     void saveFrame(AVFrame *pFrameYUV, int width, int height);
 };
 

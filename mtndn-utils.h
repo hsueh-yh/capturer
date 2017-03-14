@@ -56,6 +56,8 @@ public:
     // synchronous version of dispatchOnBackgroundThread
     static void performOnBackgroundThread(boost::function<void(void)> dispatchBlock,
                                            boost::function<void(void)> onCompletion = boost::function<void(void)>());
+    static void post(boost::function<void(void)> dispatchBlock,
+                                           boost::function<void(void)> onCompletion = boost::function<void(void)>());
 
     static void createLibFace(const GeneralParams &generalParams);
     static ptr_lib::shared_ptr<FaceProcessor> getLibFace();

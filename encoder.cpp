@@ -1,15 +1,15 @@
 #include "encoder.h"
 
 
-Encoder::Encoder():
+FFEncoder::FFEncoder():
     backup(0),
     frameNo_(-1)
 {}
-Encoder::~Encoder()
+FFEncoder::~FFEncoder()
 { stop(); }
 
 int
-Encoder::init(AVCodecID codec_id)
+FFEncoder::init(AVCodecID codec_id)
 {
     av_register_all();
 
@@ -84,18 +84,18 @@ Encoder::init(AVCodecID codec_id)
 }
 
 int
-Encoder::getFrame( unsigned char* inbuf, int inlen, unsigned char* outbuf, int &outlen )
+FFEncoder::getFrame( unsigned char* inbuf, int inlen, unsigned char* outbuf, int &outlen )
 {
     return encode( inbuf, inlen, outbuf, outlen );
 }
 int
-Encoder::getFrame( AVFrame &frame, unsigned char* outbuf, int &outlen )
+FFEncoder::getFrame( AVFrame &frame, unsigned char* outbuf, int &outlen )
 {
-    return encode( frame, outbuf, outlen );
+    //return encode( frame, outbuf, outlen );
 }
 
 DataBlock*
-Encoder::getExtradata()
+FFEncoder::getExtradata()
 {
     if( codeCtx->extradata_size > 0 )
     {
@@ -104,7 +104,7 @@ Encoder::getExtradata()
 }
 
 void
-Encoder::stop()
+FFEncoder::stop()
 {
     if( backup )
         fclose(file);
@@ -115,21 +115,21 @@ Encoder::stop()
 }
 
 int
-Encoder::getEncodeHight()
+FFEncoder::getEncodeHight()
 { return height; }
 
 int
-Encoder::getEncodeWidth()
+FFEncoder::getEncodeWidth()
 { return width; }
 
 double
-Encoder::getPacketRate()
+FFEncoder::getPacketRate()
 { return (double)(codeCtx->framerate.num)/(double)(codeCtx->framerate.den); }
 
 
 //********************************************************
 int
-Encoder::encode( unsigned char *inbuf, int inlen, unsigned char* outbuf, int &outlen )
+FFEncoder::encode( unsigned char *inbuf, int inlen, unsigned char* outbuf, int &outlen )
 {
     av_init_packet(&avpkt);
     avpkt.data = NULL;    // packet data will be allocated by the encoder
@@ -179,34 +179,42 @@ Encoder::encode( unsigned char *inbuf, int inlen, unsigned char* outbuf, int &ou
 }
 
 int
-Encoder::encode( AVFrame &frame, unsigned char* outbuf, int &outlen )
+FFEncoder::encode( void *pframe, int64_t captureTimestamp )
 {
+    AVFrame *frame = (AVFrame*)pframe;
+    frame->pts = ++frameNo_;
     av_init_packet(&avpkt);
     avpkt.data = NULL;    // packet data will be allocated by the encoder
     avpkt.size = 0;
 
-    ret = avcodec_encode_video2(codeCtx, &avpkt, &frame, &got_output);
+    ret = avcodec_encode_video2(codeCtx, &avpkt, frame, &got_output);
 
     if (ret < 0) {
-        cout << ret << endl;
+        //cout << ret << endl;
         fprintf(stderr, "Error encoding frame\n");
+        return -1;
         //exit(1);
     }
 
     if (got_output) {
+        if( callback_ )
+        {
+            //std::cout << "Encoded " << avpkt.size << " " << avpkt.data << std::endl;
+            callback_->onEncoded(avpkt,captureTimestamp);
+        }
         //printf("Write frame %3d (size=%5d)\n", frameNo, avpkt.size);
-        outlen = avpkt.size;
-        memcpy(outbuf,avpkt.data,outlen);
+        //outlen = avpkt.size;
+        //memcpy(outbuf,avpkt.data,outlen);
         if(backup)
             fwrite(avpkt.data, 1, avpkt.size, file);
-        av_packet_unref(&avpkt);
+        //av_packet_unref(&avpkt);
     }
-
+    return 0;
     //flushEncoder();
 }
 
 void
-Encoder::flushEncoder()
+FFEncoder::flushEncoder()
 {
     for (got_output = 1; got_output; i++)
     {

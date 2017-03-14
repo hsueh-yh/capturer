@@ -1,9 +1,10 @@
 #include "capturer.h"
 #include "utils.h"
+#include "glogger.h"
 
 using namespace std;
 
-Capturer::Capturer():
+FFCapturer::FFCapturer():
 //     out_buffer(NULL),
     videoindex(-1),
     audioindex(-1),
@@ -12,18 +13,20 @@ Capturer::Capturer():
     backup(false)
 {}
 
-Capturer::~Capturer()
-{ stop(); }
+FFCapturer::~FFCapturer()
+{
+    stop();
+}
 
 int
-Capturer::init()
+FFCapturer::init()
 {
     openDevice();
     initEncoder();
 }
 
 int
-Capturer::start()
+FFCapturer::start()
 {
     pFrame=av_frame_alloc();
     pFrameYUV=av_frame_alloc();
@@ -68,18 +71,18 @@ Capturer::start()
 }
 
 int
-Capturer::getFrame(unsigned char *outbuf, int &outlen, int64_t &millisecondTimestamp)
+FFCapturer::getFrame(unsigned char *outbuf, int &outlen, int64_t &millisecondTimestamp)
 {
     return capture( outbuf, outlen, millisecondTimestamp );
 }
 int
-Capturer::getFrame( AVFrame &frame )
+FFCapturer::getFrame( AVFrame &frame )
 {
-    return capture( frame );
+    //return capture( frame );
 }
 
 int
-Capturer::stop()
+FFCapturer::stop()
 {
     sws_freeContext(img_convert_ctx);
 
@@ -87,15 +90,38 @@ Capturer::stop()
         fclose(fp_yuv);
 
     av_free(out_buffer);
-    av_free(pFrameYUV);
+    av_frame_free(&pFrameYUV);
+    //av_free(pFrameYUV);
     avcodec_close(pCodecCtx);
     avformat_close_input(&pFormatCtx);
+    std::vector<AVFrame*>::iterator it = avframesMap_.begin();
+    for( ; it != avframesMap_.end(); ++it )
+        av_frame_free(&(*it));
 }
 
+void*
+FFCapturer::getFrameBuf()
+{
+    AVFrame *frame;
+    frame = av_frame_alloc();
+    frame->format = AV_PIX_FMT_YUV420P;
+    frame->width = 640;
+    frame->height = 480;
+    av_frame_get_buffer(frame,1);
+    avframesMap_.push_back(frame);
+    return (void*)frame;
+}
+
+int
+FFCapturer::incomingYUV420Frame(void* frameObj, int64_t &captureTsMs)
+{
+    //LOG(INFO) << "incomingYUV420Frame" << std::endl;
+    capture(frameObj,captureTsMs);
+}
 
 //********************************************************
 bool
-Capturer::openDevice()
+FFCapturer::openDevice()
 {
     avdevice_register_all();    //Register Device
 
@@ -147,10 +173,10 @@ Capturer::openDevice()
 }
 
 bool
-Capturer::initEncoder()
+FFCapturer::initEncoder()
 {
     av_register_all();
-    avformat_network_init();
+    //avformat_network_init();
 
     pCodecCtx=pFormatCtx->streams[videoindex]->codec;
     pCodec=avcodec_find_decoder(pCodecCtx->codec_id);
@@ -164,7 +190,7 @@ Capturer::initEncoder()
 }
 
 int
-Capturer::capture( unsigned char *outbuf, int &outlen, int64_t &millisecondTimestamp )
+FFCapturer::capture( unsigned char *outbuf, int &outlen, int64_t &millisecondTimestamp )
 {
     int ret, got_picture;
 
@@ -233,15 +259,17 @@ Capturer::capture( unsigned char *outbuf, int &outlen, int64_t &millisecondTimes
 }
 
 int
-Capturer::capture( AVFrame &ourFrame )
+FFCapturer::capture( void* frameObj, int64_t &captureTsMs )
 {
+    AVFrame *outFrame = (AVFrame*)(frameObj);
     int ret, got_picture;
 
+    captureTsMs = NdnUtils::millisecondTimestamp();
     if(av_read_frame(pFormatCtx, packet)>=0)
     {
         if(packet->stream_index==videoindex)
         {
-            ret = avcodec_decode_video2(pCodecCtx, &ourFrame, &got_picture, packet);
+            ret = avcodec_decode_video2(pCodecCtx, pFrame, &got_picture, packet);
             if(ret < 0)
             {
                 printf("Decode Error.\n");
@@ -249,9 +277,15 @@ Capturer::capture( AVFrame &ourFrame )
             }
             if(got_picture)
             {
+                sws_scale(img_convert_ctx, (const unsigned char* const*)pFrame->data,
+                          pFrame->linesize, 0, pCodecCtx->height,
+                          outFrame->data, outFrame->linesize);
+//                std::cout << "capturer "
+//                          << outFrame->width << " " << outFrame->height
+//                          << " " << (void*)&(outFrame->data) << std::endl;
                 if( backup)
                 {
-                    saveFrame(&ourFrame, pCodecCtx->width, pCodecCtx->height);
+                    saveFrame(outFrame, pCodecCtx->width, pCodecCtx->height);
                 }
 
             }//if(got_picture)
@@ -266,7 +300,7 @@ Capturer::capture( AVFrame &ourFrame )
 }
 
 void
-Capturer::saveFrame(AVFrame *pFrameYUV, int width, int height)
+FFCapturer::saveFrame(AVFrame *pFrameYUV, int width, int height)
 {
     if( flg)
     {

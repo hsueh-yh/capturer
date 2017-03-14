@@ -130,7 +130,7 @@ MtNdnUtils::startBackgroundThread()
     {
         backgroundWork.reset(new boost::asio::io_service::work(*MtNdnIoService));
         resetThread();
-        //resetThread1();
+        resetThread1();
     }
 }
 
@@ -145,9 +145,9 @@ MtNdnUtils::addBackgroundThread()
     if ( !backgroundWork.get() )
     {
         backgroundWork.reset(new boost::asio::io_service::work(*MtNdnIoService));
+        startNewThread();
     }
     startNewThread();
-
     return backgroundThreadGroup.size();
 }
 
@@ -197,7 +197,7 @@ MtNdnUtils::dispatchOnBackgroundThread(boost::function<void(void)> dispatchBlock
 
 void
 MtNdnUtils::performOnBackgroundThread(boost::function<void(void)> dispatchBlock,
-                                             boost::function<void(void)> onCompletion)
+                                      boost::function<void(void)> onCompletion)
 {
     if (backgroundWork.get())
     {
@@ -218,12 +218,12 @@ MtNdnUtils::performOnBackgroundThread(boost::function<void(void)> dispatchBlock,
             boost::condition_variable isDone;
 
             (*MtNdnIoService).post([dispatchBlock, onCompletion, &isDone]{
-                VLOG(LOG_DEBUG) << "performOnBackgroundThread post "
-                             << boost::this_thread::get_id() << std::endl;
+                //VLOG(LOG_DEBUG) << "performOnBackgroundThread post "
+                 //            << boost::this_thread::get_id() << std::endl;
                 dispatchBlock();
 
-                VLOG(LOG_DEBUG) << "performOnBackgroundThread post done "
-                             << boost::this_thread::get_id() << std::endl;
+                //VLOG(LOG_DEBUG) << "performOnBackgroundThread post done "
+                //             << boost::this_thread::get_id() << std::endl;
                 if (onCompletion)
                     onCompletion();
                 isDone.notify_one();
@@ -237,6 +237,31 @@ MtNdnUtils::performOnBackgroundThread(boost::function<void(void)> dispatchBlock,
         throw std::runtime_error(" this is not supposed to happen. bg thread is dead already");
     }
 }
+
+void
+MtNdnUtils::post(boost::function<void(void)> dispatchBlock,
+                 boost::function<void(void)> onCompletion)
+{
+    if (backgroundWork.get())
+    {
+        (*MtNdnIoService).post([dispatchBlock, onCompletion]{
+            //VLOG(LOG_DEBUG) << "performOnBackgroundThread post "
+             //            << boost::this_thread::get_id() << std::endl;
+            cout << "post" << endl;
+            dispatchBlock();
+            //VLOG(LOG_DEBUG) << "performOnBackgroundThread post done "
+            //             << boost::this_thread::get_id() << std::endl;
+            if (onCompletion)
+                onCompletion();
+            //isDone.notify_one();
+        });
+    }
+    else
+    {
+        throw std::runtime_error(" this is not supposed to happen. bg thread is dead already");
+    }
+}
+
 
 void
 MtNdnUtils::createLibFace(const GeneralParams &generalParams)
