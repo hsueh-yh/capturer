@@ -29,7 +29,7 @@ public:
 };
 
 
-class Publisher
+class Publisher : public MtNdnComponent
         //: public ptr_lib::enable_shared_from_this<Publisher>
 {
 public:
@@ -51,7 +51,7 @@ public:
     getFace()
     { return face_; }
 
-    std::string
+    const std::string&
     getStreamName()
     { return settings_.streamPrefix_; }
 
@@ -61,7 +61,7 @@ public:
 
 
     //////////////////////////////////////////////////////////////
-    virtual void
+    void
     onInterest( const ptr_lib::shared_ptr<const Name>& prefix,
                 const ptr_lib::shared_ptr<const Interest>& interest, Face& face,
                 uint64_t interestFilterId,
@@ -100,6 +100,13 @@ protected:
 
     bool isBackupYUV, isBackup264;
     FILE *fp_yuv, *fp_264;
+
+
+    virtual void processInterest(
+            const ptr_lib::shared_ptr<const Name>& prefix,
+            const ptr_lib::shared_ptr<const Interest>& interest, Face& face,
+            uint64_t interestFilterId,
+            const ptr_lib::shared_ptr<const InterestFilter>& filter) = 0;
 
 };
 

@@ -168,7 +168,7 @@ Publisher::onInterest(
         uint64_t interestFilterId,
         const ptr_lib::shared_ptr<const InterestFilter>& filter )
 {
-    LOG(INFO) << "RCVE " << prefix->toUri() << endl;
+    processInterest( prefix, interest, face, interestFilterId, filter );
 }
 
 

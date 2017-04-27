@@ -13,7 +13,7 @@ FrameBuffer::FrameBuffer(std::string basePrefix) :
     bufSize_(200),
     startPkgNo_(0),
     lastPkgNo_(0),
-    lastSeqNo_(0),
+    lastFrmNo_(0),
     isbackup(false)
 {
     init();
@@ -43,7 +43,7 @@ FrameBuffer::init(int frameNumbers)
     initSlots();
 }
 
-void
+int
 FrameBuffer::appendData(const unsigned char* data, const unsigned int size, int64_t millisecondTimestamp)
 {
     ptr_lib::lock_guard<ptr_lib::recursive_mutex> scopedLock(syncMutex_);
@@ -58,7 +58,7 @@ FrameBuffer::appendData(const unsigned char* data, const unsigned int size, int6
 
     uint8_t nalHead = data[4];
     if( nalHead == 0x67)
-        lastSeqNo_ = lastPkgNo_+1;
+        lastFrmNo_ = lastPkgNo_+1;
 
     int currentBlockSize;
     for( int i = 0; i < segNum; ++i )
@@ -115,6 +115,8 @@ FrameBuffer::appendData(const unsigned char* data, const unsigned int size, int6
                   << ") [" << dec << dataBlockSlot->size()<<"-" << size << "]" << endl;
         //*/
         //NdnUtils::printMem("cache",dataBlock->dataPtr(),20);
+
+        return segNum;
     }
 }
 

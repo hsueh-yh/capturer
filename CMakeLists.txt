@@ -9,51 +9,8 @@ add_definitions(-g -W -Wall -std=c++11 )
 
 
 ############source files############
-set(SRC_LIST
-capturer.cpp
-encoder.cpp
-face-wrapper.cpp
-frame-buffer.cpp
-frame-data.cpp
-glogger.cpp
-main.cpp
-manager.cpp
-mtndn-object.cpp
-mtndn-utils.cpp
-name-components.cpp
-namespacer.cpp
-publisher.cpp
-utils.cpp
-video-capturer.cpp
-video-encoder.cpp
-video-publisher.cpp
-)
+aux_source_directory(. SRC_LIST)
 
-set(INCLUDE_LIST
-capturer.h
-common.h
-encoder.h
-face-wrapper.h
-frame-buffer.h
-frame-data.h
-glogger.h
-interfaces.h
-manager.h
-mtndn-defines.h
-mtndn-object.h
-mtndn-utils.h
-name-components.h
-namespacer.h
-params.h
-publisher.h
-utils.h
-video-capturer.h
-video-encoder.h
-video-publisher.h
-)
-
-#aux_source_directory(./ SRC_LIST)
-#aux_source_directory(. SRC_LIST)
 #add_subdirectory(subsrc)
 include_directories(./)    #head file path
 
