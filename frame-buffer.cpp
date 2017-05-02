@@ -115,9 +115,9 @@ FrameBuffer::appendData(const unsigned char* data, const unsigned int size, int6
                   << ") [" << dec << dataBlockSlot->size()<<"-" << size << "]" << endl;
         //*/
         //NdnUtils::printMem("cache",dataBlock->dataPtr(),20);
-
-        return segNum;
     }
+
+    return segNum;
 }
 
 ptr_lib::shared_ptr<DataBlock>

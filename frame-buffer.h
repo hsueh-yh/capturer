@@ -37,6 +37,12 @@ public:
     void
     getCachedRange(FrameNumber& start, FrameNumber& end);
 
+    unsigned int
+    getLastIFrameNo()
+    {
+        return lastFrmNo_;
+    }
+
 private:
 
     std::string     basePrefix_;

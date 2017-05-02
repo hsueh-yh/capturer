@@ -1,6 +1,7 @@
 #include "manager.h"
 #include "mtndn-utils.h"
 #include "video-publisher-stream.h"
+#include "video-publisher-frames.h"
 
 typedef std::map<std::string, ptr_lib::shared_ptr<Publisher>> PublisherMap;
 
@@ -68,7 +69,10 @@ Manager::addLocalStream(const GeneralParams &generalParams,
         ptr_lib::shared_ptr<FaceProcessor> face = MtNdnUtils::getLibFace();
 
         ptr_lib::shared_ptr<Publisher> publisher;
-        publisher.reset(new VideoPublisherStream(generalParams, capturer));
+        if( generalParams.transType_ == "byFrame" || generalParams.transType_ == "frame" )
+            publisher.reset(new VideoPublisherFrames(generalParams, capturer));
+        else //( generalParams.transType_ == "byStream")
+            publisher.reset(new VideoPublisherStream(generalParams, capturer));
 
         PublisherSettings settings;
         settings.streamPrefix_ = mediaStreamParams.streamName_;

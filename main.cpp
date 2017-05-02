@@ -77,7 +77,7 @@ std::string createLogDir( const char* root )
     return logfile;
 }
 
-void addLocalStream(std::string streamName, FFCapturer *capturer)
+void addLocalStream(std::string transType, std::string streamName, FFCapturer *capturer)
 {
     manager = &(Manager::getSharedInstance());
 
@@ -86,6 +86,7 @@ void addLocalStream(std::string streamName, FFCapturer *capturer)
     VideoThreadParams videoThreadParams;
     VideoCoderParams videoCoderParams;
 
+    generalParams.transType_ = transType;
     generalParams.host_ = HOST_DEFAULT;
     generalParams.portNum_ = PORT_DEFAULT;
 
@@ -111,10 +112,13 @@ void addLocalStream(std::string streamName, FFCapturer *capturer)
 int main(int argc, char** argv)
 {
     int num = 1, i;
-
-    if( argc != 1 )
+    string transType; // frame or stream
+    for( int i = 1; i < argc; ++i )
     {
-        num = argv[1][0] - '0';
+        if( strcmp(argv[i], "-n" ) == 0 )
+                num = argv[i+1][0] - '0';
+        if( strcmp(argv[i], "-t") == 0 )
+            transType = argv[i+1];
     }
 
     std::string logfile = createLogDir("./logs");
@@ -134,7 +138,7 @@ int main(int argc, char** argv)
         streamName.append("/video");
         //std::cout << streamName << std::endl;
 
-        addLocalStream(streamName, capturer);
+        addLocalStream(transType, streamName, capturer);
     }
     std::cout << "added " << i << " stream" << std::endl;
 

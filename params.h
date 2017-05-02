@@ -152,6 +152,7 @@ public:
     ndnlog::NdnLoggerDetailLevel loggingLevel_ = ndnlog::NdnLoggerDetailLevelAll;
     std::string logFile_ = "";
     std::string logPath_ = "";
+    std::string transType_ = "byFrame";
 
     bool    useTlv_ = false,
             useRtx_ = false,

@@ -99,12 +99,6 @@ public:
     void onEncodedFrameDelivered(vector<uint8_t> &encodedImage,
                             int64_t captureTimestamp);
 
-    void
-    onInterest( const ptr_lib::shared_ptr<const Name>& prefix,
-                const ptr_lib::shared_ptr<const Interest>& interest,
-                Face& face, uint64_t interestFilterId,
-                const ptr_lib::shared_ptr<const InterestFilter>& filter);
-
 protected:
 
     ptr_lib::shared_ptr<VideoCapturer> videoCapturer_;
