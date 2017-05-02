@@ -4,41 +4,13 @@ cmake_minimum_required(VERSION 2.8)
 
 ############compiler settings############
 set(CMAKE_C_COMPILER "g++")
-add_definitions(-g -W -Wall -std=c++11 -fPIC -DTIXML_USE_STL)
+add_definitions(-g -W -Wall -std=c++11 )
 #add_definitions(-DDEBUG)
 
 
 ############source files############
-set(SRC_LIST
-capturer.cpp
-encoder.cpp
-frame-buffer.cpp
-frame-data.cpp
-main.cpp
-manager.cpp
-name-components.cpp
-namespacer.cpp
-publisher.cpp
-utils.cpp
-)
+aux_source_directory(. SRC_LIST)
 
-set(INCLUDE_LIST
-capturer.h
-common.h
-encoder.h
-frame-buffer.h
-frame-data.h
-interfaces.h
-manager.h
-name-components.h
-namespacer.h
-params.h
-publisher.h
-utils.h
-)
-
-#aux_source_directory(./ SRC_LIST)
-#aux_source_directory(. SRC_LIST)
 #add_subdirectory(subsrc)
 include_directories(./)    #head file path
 

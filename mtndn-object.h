@@ -22,7 +22,7 @@
 #include <sstream>
 
 #include "mtndn-utils.h"
-#include "simple-log.h"
+//#include "simple-log.h"
 
 
 class IMtNdnComponentCallback {
@@ -33,7 +33,7 @@ public:
 };
         
 class MtNdnComponent :
-        public ndnlog::new_api::ILoggingObject,
+        //public ndnlog::new_api::ILoggingObject,
         public IMtNdnComponentCallback,
         public boost::enable_shared_from_this<MtNdnComponent>
 {
@@ -58,9 +58,6 @@ public:
 
     //////////////////////////////////////////////////////////////////////
     // ILoggingObject
-
-    virtual std::string
-    getDescription() const;
 
     virtual bool
     isLoggingEnabled() const

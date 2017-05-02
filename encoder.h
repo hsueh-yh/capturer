@@ -5,6 +5,7 @@
 #include <iostream>
 #include "frame-data.h"
 
+#ifdef __cplusplus
 extern "C"
 {
 #endif
@@ -14,16 +15,27 @@ extern "C"
 #include <libavutil/imgutils.h>
 #ifdef __cplusplus
 }
+#endif
 
 using namespace std;
 
-class Encoder
+
+class FF_EncodeCompleteCallback
 {
 public:
-    Encoder();
-    ~Encoder();
+    virtual void onEncoded(const AVPacket &decodedFrame, int64_t captureTimestamp) = 0;
+};
 
-    int init(AVCodecID codec_id);
+class FFEncoder
+{
+public:
+    FFEncoder();
+    ~FFEncoder();
+
+    int init(AVCodecID codec_id = AV_CODEC_ID_H264);
+
+    void RegisterEncodeCompleteCallback(FF_EncodeCompleteCallback *callback)
+    { callback_ = callback; }
 
     int getFrame( unsigned char* inbuf, int inlen, unsigned char* outbuf, int &outlen );
 
@@ -39,12 +51,13 @@ public:
 
     double getPacketRate();
 
+    void onDeliverFrame(const AVFrame &frame);
+
+    int encode(void *pframe, int64_t captureTimestamp);
 
 private:
 
     int encode( unsigned char *inbuf, int inlen, unsigned char* outbuf, int &outlen );
-
-    int encode( AVFrame &frame, unsigned char* outbuf, int &outlen );
 
     void flushEncoder();
 
@@ -63,6 +76,8 @@ private:
     int backup;
 
     unsigned int frameNo_;
+
+    FF_EncodeCompleteCallback *callback_ = nullptr;
 
 };
 

@@ -15,8 +15,10 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "logger.hpp"
+#include "glogger.h"
 #include "publisher.h"
+
+#include "manager.h"
 
 
 
@@ -25,6 +27,8 @@
 #define PORT_DEFAULT 6363
 
 using namespace std;
+
+Manager *manager;
 
 std::string createLogDir( const char* root )
 {
@@ -73,7 +77,79 @@ std::string createLogDir( const char* root )
     return logfile;
 }
 
+void addLocalStream(std::string transType, std::string streamName, FFCapturer *capturer)
+{
+    manager = &(Manager::getSharedInstance());
 
+    GeneralParams generalParams;
+    MediaStreamParams mediaStreamParams;
+    VideoThreadParams videoThreadParams;
+    VideoCoderParams videoCoderParams;
+
+    generalParams.transType_ = transType;
+    generalParams.host_ = HOST_DEFAULT;
+    generalParams.portNum_ = PORT_DEFAULT;
+
+    mediaStreamParams.streamName_ = streamName;
+    mediaStreamParams.type_ = MediaStreamParams::MediaStreamTypeVideo;
+
+    videoCoderParams.codecFrameRate_ = 30;
+    videoCoderParams.encodeHeight_ = 480;
+    videoCoderParams.encodeWidth_ = 640;
+    videoCoderParams.gop_ = 10;
+    videoCoderParams.maxBitrate_ = 600000;
+
+    videoThreadParams.coderParams_ = videoCoderParams;
+
+    //capturer = capt;
+
+    std::string addedStreamName;
+    addedStreamName = manager->addLocalStream(generalParams,videoThreadParams,
+                            mediaStreamParams,capturer);
+    LOG(INFO) << "addedStream " << addedStreamName << std::endl << std::endl;
+}
+
+int main(int argc, char** argv)
+{
+    int num = 1, i;
+    string transType; // frame or stream
+    for( int i = 1; i < argc; ++i )
+    {
+        if( strcmp(argv[i], "-n" ) == 0 )
+                num = argv[i+1][0] - '0';
+        if( strcmp(argv[i], "-t") == 0 )
+            transType = argv[i+1];
+    }
+
+    std::string logfile = createLogDir("./logs");
+    GLogger glog( argv[0], logfile.c_str() );
+    std::cout << "Log to path: " << logfile << std::endl;
+
+    FFCapturer *capturer = new FFCapturer;
+    capturer->init();
+    capturer->start();
+
+    for( i = 0; i < num; ++i )
+    {
+        std::string streamName = "/com/monitor/location1/stream";
+        stringstream ss;
+        ss << i;
+        streamName.append(ss.str());
+        streamName.append("/video");
+        //std::cout << streamName << std::endl;
+
+        addLocalStream(transType, streamName, capturer);
+    }
+    std::cout << "added " << i << " stream" << std::endl;
+
+    std::string endstr;
+    std::cin>>endstr;
+    while( 0!=endstr.compare("stop") && 0!=endstr.compare("STOP"))
+        std::cin >> endstr;
+    return 0;
+}
+
+/*
 int main(int argc, char** argv)
 {
     std::string streamName = "/com/monitor/location1/stream";
@@ -125,3 +201,4 @@ int main(int argc, char** argv)
     }
     return 0;
 }
+*/
