@@ -129,13 +129,16 @@ int main(int argc, char** argv)
     capturer->init();
     capturer->start();
 
-    for( i = 0; i < num; ++i )
+    for( i = 0; i < 1 /*num*/; ++i )
     {
+        std::string streamName = "/com/monitor/location1/stream0/video";
+        /*
         std::string streamName = "/com/monitor/location1/stream";
         stringstream ss;
         ss << i;
         streamName.append(ss.str());
         streamName.append("/video");
+        */
         //std::cout << streamName << std::endl;
 
         addLocalStream(transType, streamName, capturer);
