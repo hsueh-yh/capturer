@@ -92,7 +92,7 @@ VideoPublisherFrames::~VideoPublisherFrames ()
 int
 VideoPublisherFrames::init(const PublisherSettings &settings, const MediaThreadParams* videoThreadParams)
 {
-    LOG(INFO) << "VideoPublihser init" << std::endl;
+    LOG(INFO) << "VideoPublisherFrames init DONE" << std::endl;
     if( RESULT_NOT_OK(Publisher::init(settings,videoThreadParams)) )
         return RESULT_ERR;
 
@@ -109,7 +109,7 @@ VideoPublisherFrames::init(const PublisherSettings &settings, const MediaThreadP
 int
 VideoPublisherFrames::start()
 {
-    LOG(INFO) << "[VideoPublisherFrames] Start " << std::endl;
+    LOG(INFO) << "[VideoPublisherFrames] Start DONE" << std::endl;
 
     videoCapturer_->start();
 
@@ -119,7 +119,7 @@ VideoPublisherFrames::start()
 int
 VideoPublisherFrames::stop()
 {
-    LOG(INFO) << "[VideoPublisherFrames] Stop" << std::endl;
+    LOG(INFO) << "[VideoPublisherFrames] Stop DNOE" << std::endl;
     face_->unregisterPrefix(registedId_);
 
     if(isBackupYUV)
@@ -160,7 +160,8 @@ VideoPublisherFrames::processInterest(
 
     std::string streamPrefix_ = getStreamName();
     Name requestName(interest->getName());
-    Name responseName(streamPrefix_);
+    //Name responseName(requestName);
+    Name responseName("/com/monitor/location1/stream0/video");
     responseName.append(requestName.getSubName(responseName.size()));
 
     LOG(INFO) << "Request : " << requestName.toUri() << endl;
@@ -190,7 +191,7 @@ VideoPublisherFrames::processInterest(
     frameBuffer_->getCachedRange(firstPktNo, lastPktNo);
     if( !naluData )
     {
-        cout << "No Data: " << interest->getName().toUri()
+        LOG(INFO) << "No Data: " << responseName.toUri()
              << " Cached frameNo: " << firstPktNo << " to " << lastPktNo << endl;
         //Data emptyData(requestName);
         //face.putData(emptyData);

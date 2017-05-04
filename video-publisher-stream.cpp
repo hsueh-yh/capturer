@@ -117,7 +117,7 @@ VideoPublisherStream::onEncodedFrameDelivered(vector<uint8_t> &encodedImage,
         {
             FrameNumber firstPktNo, lastPktNo;
             frameBuffer_->getCachedRange(firstPktNo, lastPktNo);
-            //firstPktNo = min(frameBuffer_->getLastIFrameNo(), lastPktNo-res+1);
+            //firstPktNo = min(frameBuffer_->getLastPktNo(), lastPktNo-res+1);
             for( FrameNumber pktNo = lastPktNo-res+1; pktNo <= lastPktNo; ++pktNo )
             {
                 pushFrame( Name(getStreamName()).append(

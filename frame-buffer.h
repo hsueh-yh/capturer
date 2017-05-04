@@ -35,13 +35,12 @@ public:
     { return lastFrmNo_; }
 
     void
-    getCachedRange(FrameNumber& start, FrameNumber& end);
-
-    unsigned int
-    getLastIFrameNo()
+    getCachedRange(FrameNumber& start, FrameNumber& end)
     {
-        return lastFrmNo_;
+        start = startPkgNo_;
+        end = lastPkgNo_;
     }
+
 
 private:
 
