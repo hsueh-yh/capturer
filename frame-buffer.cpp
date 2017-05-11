@@ -109,7 +109,7 @@ FrameBuffer::appendData(const unsigned char* data, const unsigned int size, int6
                 << " seg:"<< i << " Num:" << segNum
                 << " ( Size = " << dec << currentBlockSize<<" of " << size << " )" << endl;
 
-        ///*
+        /*
         LOG(INFO) << "[FrameBuffer] Cached " << dataPrefix.toUri()
                   << " (" << i << "-" << segNum
                   << ") [" << dec << dataBlockSlot->size()<<"-" << size << "]" << endl;

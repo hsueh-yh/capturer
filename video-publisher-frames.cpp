@@ -202,7 +202,7 @@ VideoPublisherFrames::processInterest(
 
     requestName.append(NameComponents::NameComponentNalIdx);
     requestName.append(nalType);
-    requestName.append(MtNdnUtils::componentFromInt(lastPktNo));
+    requestName.append(MtNdnUtils::componentFromInt(lastPktNo-1));
     //requestName.append(MtNdnUtils::componentFromInt(lastPktNo));
     Data ndnData(requestName);
 
