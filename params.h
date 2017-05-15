@@ -43,7 +43,7 @@ public:
     unsigned int gop_;
     unsigned int startBitrate_, maxBitrate_;
     unsigned int encodeWidth_, encodeHeight_;
-    bool dropFramesOn_;
+    bool BFramesOn_, dropFramesOn_;
 
     void write(std::ostream &os) const
     {
@@ -52,8 +52,27 @@ public:
         << gop_ << "; Start bitrate: "
         << startBitrate_ << "kbit/s; Max bitrate:"
         << maxBitrate_ << "kbit/s; "
-        << encodeWidth_ << "x" << encodeHeight_ << "; Drop: "
+        << encodeWidth_ << "x" << encodeHeight_ << "; BFrm: "
+        << (BFramesOn_?"YES":"NO" ) << "; Drop:"
         << (dropFramesOn_?"YES":"NO");
+    }
+};
+
+// video thread parameters
+class VideoCapturerParams : public Params {
+public:
+    std::string dev_;
+    std::string format_;
+    double frameRate_;
+    unsigned int width_, height_;
+
+    void write(std::ostream &os) const
+    {
+        os
+        << "Dev: " << dev_
+        << "; format: " << format_
+        << "; FrameRate: " << frameRate_ << "FPS; "
+        << width_ << "x" << height_ << ";";
     }
 };
 
@@ -120,7 +139,13 @@ public:
         MediaStreamTypeVideo = 1
     } MediaStreamType;
 
-    void write(std::ostream &os) const {}
+    void write(std::ostream &os) const
+    {
+        os << "type: "
+           << (type_==MediaStreamTypeVideo?
+                   "video" : "audio")
+           << "; name: " << streamName_;
+    }
 
     MediaStreamType type_;
     std::string streamName_ = "";
@@ -129,7 +154,7 @@ private:
 };
 
 // general consumer parameters
-class GeneralConsumerParams : public Params {
+class PublisherParams : public Params {
 public:
     unsigned int interestLifetime_ = 0;
     unsigned int bufferSlotsNum_ = 0, slotSize_ = 0;
@@ -164,12 +189,18 @@ public:
             skipIncomplete_ = false;
 
     // network
-    std::string prefix_ = "", host_ = "";
+    std::string host_ = "";
     unsigned int portNum_ = 0;
+    std::string dev_ = "/dev/video0";
 
     void write(std::ostream &os) const
     {
-        os << "log level: "
+        os
+        << "; Host: " << host_
+        << "; Port #: " << portNum_
+        << "; Dev : " << dev_
+        << "; Type : " << transType_
+        << "; log level: " << 0
         << "; log file: " << logFile_
         << "; TLV: " << (useTlv_?"ON":"OFF")
         << "; RTX: " << (useRtx_?"ON":"OFF")
@@ -178,10 +209,9 @@ public:
         << "; Audio: " << (useAudio_?"ON":"OFF")
         << "; Video: " << (useVideo_?"ON":"OFF")
         << "; A/V Sync: " << (useAvSync_?"ON":"OFF")
-        << "; Skipping incomplete frames: " << (skipIncomplete_?"ON":"OFF")
-        << "; Prefix: " << prefix_
-        << "; Host: " << host_
-        << "; Port #: " << portNum_;
+        << "; Skipping incomplete frames: "
+        << (skipIncomplete_?"ON":"OFF");
+        //<< "; Prefix: " << prefix_;
     }
 };
 

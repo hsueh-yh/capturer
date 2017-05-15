@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include "frame-data.h"
+#include "interfaces.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -32,7 +33,7 @@ public:
     FFEncoder();
     ~FFEncoder();
 
-    int init(AVCodecID codec_id = AV_CODEC_ID_H264);
+    int init(VideoCoderParams& params, AVCodecID codec_id = AV_CODEC_ID_H264);
 
     void RegisterEncodeCompleteCallback(FF_EncodeCompleteCallback *callback)
     { callback_ = callback; }

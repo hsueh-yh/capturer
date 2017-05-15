@@ -13,7 +13,7 @@ public:
     VideoCapturer(IExternalCapturer* externalCapturer);
     ~VideoCapturer();
 
-    void init();
+    void init(const VideoCapturerParams &params );
 
     void start();
 

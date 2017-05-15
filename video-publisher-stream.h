@@ -88,7 +88,7 @@ public:
     ~VideoPublisherStream ();
 
     int
-    init(const PublisherSettings &settings, const MediaThreadParams* videoThreadParams);
+    init(const PublisherSettings &settings);
 
     int
     start();

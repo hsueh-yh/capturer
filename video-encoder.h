@@ -27,7 +27,12 @@ public:
     VideoEncoder();
     virtual ~VideoEncoder();
 
-    void init(VideoCoderParams settings);
+    void init(const VideoCoderParams &settings);
+
+    void stop()
+    {
+        ff_encoder_->stop();
+    }
 
     void onDeliverRawFrame(void *frame, int64_t captureTsMs);
 
@@ -39,11 +44,11 @@ public:
 
 private:
     VideoCoderParams settings_;
-    std::shared_ptr<FFEncoder> encoder_;
+    std::shared_ptr<FFEncoder> ff_encoder_;
 
     IEncodedFrameConsumer *frameConsumer_ = nullptr;
 
-    void reset();
+    void reset(const VideoCoderParams &settings);
 };
 
 #endif

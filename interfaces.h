@@ -1,6 +1,8 @@
 #ifndef INTERFACES_H_
 #define INTERFACES_H_
 
+#include "params.h"
+
 /**
  * This class is used for delivering raw ARGB frames to the library.
  * After calling initPublishing, library returns a pointer of object
@@ -11,6 +13,15 @@
 class IExternalCapturer
 {
 public:
+
+    virtual ~IExternalCapturer()
+    {}
+
+    virtual int init( const VideoCapturerParams& params ) = 0;
+
+    virtual int start() = 0;
+
+    virtual int stop() = 0;
 
     virtual void* getFrameBuf() = 0;
 

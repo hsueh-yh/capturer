@@ -9,7 +9,7 @@ FFEncoder::~FFEncoder()
 { stop(); }
 
 int
-FFEncoder::init(AVCodecID codec_id)
+FFEncoder::init(VideoCoderParams &params, AVCodecID codec_id)
 {
     av_register_all();
 
@@ -26,11 +26,14 @@ FFEncoder::init(AVCodecID codec_id)
         exit(1);
     }
 
+    width = params.encodeWidth_;
+    height = params.encodeHeight_;
+
     /* put sample parameters */
-    codeCtx->bit_rate = 600000;
+    codeCtx->bit_rate = params.startBitrate_;//600000;
     /* resolution must be a multiple of two */
-    codeCtx->width = 640;
-    codeCtx->height = 480;
+    codeCtx->width = width;
+    codeCtx->height = height;
     /* frames per second */
     codeCtx->time_base = (AVRational){1,25};
     /* emit one intra frame every ten frames
@@ -39,9 +42,9 @@ FFEncoder::init(AVCodecID codec_id)
      * then gop_size is ignored and the output of encoder
      * will always be I frame irrespective to gop_size
      */
-    codeCtx->gop_size = 10;
+    codeCtx->gop_size = params.gop_;
     //codeCtx->max_b_frames = 0;
-    codeCtx->has_b_frames = 0; // without B frame
+    codeCtx->has_b_frames = params.BFramesOn_; // without B frame
     codeCtx->pix_fmt = AV_PIX_FMT_YUV420P;
 
     if (codec_id == AV_CODEC_ID_H264)
@@ -109,8 +112,9 @@ FFEncoder::stop()
     if( backup )
         fclose(file);
     avcodec_close(codeCtx);
-    av_free(codeCtx);
-    av_freep(&frameYUV->data[0]);
+    //av_free(codeCtx);
+    av_frame_free(&frameYUV);
+    //av_freep(&frameYUV->data[0]);
     av_packet_unref(&avpkt);
 }
 

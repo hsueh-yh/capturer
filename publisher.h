@@ -24,6 +24,9 @@ class PublisherSettings
 {
 public:
     std::string streamPrefix_;
+    PublisherParams publisherParams_;
+    VideoCapturerParams captureParams_;
+    VideoCoderParams coderParams_;
     MediaStreamParams streamParams_;
     ptr_lib::shared_ptr<FaceProcessor> faceProcessor_;
 };
@@ -39,7 +42,7 @@ public:
 
 
     virtual int
-    init(const PublisherSettings &settings, const MediaThreadParams* videoThreadParams);
+    init(const PublisherSettings &settings);
 
     virtual int
     start();

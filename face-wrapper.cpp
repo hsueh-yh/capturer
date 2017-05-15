@@ -240,7 +240,7 @@ FaceProcessor::~FaceProcessor()
     faceWrapper_->shutdown();
     transport_.reset();
 
-    std::cout << /*description_ <<*/ "Face processor dtor" << std::endl;
+    //std::cout << /*description_ <<*/ "Face processor dtor" << std::endl;
 }
 
 //******************************************************************************

@@ -17,7 +17,7 @@
 
 #include "glogger.h"
 #include "publisher.h"
-
+#include "config.h"
 #include "manager.h"
 
 
@@ -76,7 +76,7 @@ std::string createLogDir( const char* root )
 
     return logfile;
 }
-
+/*
 void addLocalStream(std::string transType, std::string streamName, FFCapturer *capturer)
 {
     manager = &(Manager::getSharedInstance());
@@ -108,30 +108,91 @@ void addLocalStream(std::string transType, std::string streamName, FFCapturer *c
                             mediaStreamParams,capturer);
     LOG(INFO) << "addedStream " << addedStreamName << std::endl << std::endl;
 }
+*/
+void addLocalStream( PParams *param )
+{
+    manager = &(Manager::getSharedInstance());
+
+/*
+    GeneralParams &generalParams = param->generalParams_;
+    MediaStreamParams &mediaStreamParams = param->mediaStreamParams_;
+    VideoCoderParams &videoCoderParams = param->coderParams_;
+
+    generalParams.transType_ = transType;
+    generalParams.host_ = HOST_DEFAULT;
+    generalParams.portNum_ = PORT_DEFAULT;
+
+    mediaStreamParams.streamName_ = streamName;
+    mediaStreamParams.type_ = MediaStreamParams::MediaStreamTypeVideo;
+
+    videoCoderParams.codecFrameRate_ = 30;
+    videoCoderParams.encodeHeight_ = 480;
+    videoCoderParams.encodeWidth_ = 640;
+    videoCoderParams.gop_ = 10;
+    videoCoderParams.maxBitrate_ = 600000;
+
+    //capturer = capt;
+*/
+
+    std::string addedStreamName;
+    addedStreamName = manager->addLocalStream(param->generalParams_,
+                                              param->publisherParams_,
+                                              param->capturerParam_,
+                                              param->coderParams_,
+                                              param->mediaStreamParams_,
+                                              param->capturer_);
+    LOG(INFO) << "Publishing " << addedStreamName << std::endl << std::endl;
+}
+
 
 int main(int argc, char** argv)
 {
+    /*
     int num = 1, i;
     string transType; // frame or stream
+    std::string dev = "/dev/video0";
+
+
     for( int i = 1; i < argc; ++i )
     {
         if( strcmp(argv[i], "-n" ) == 0 )
                 num = argv[i+1][0] - '0';
         if( strcmp(argv[i], "-t") == 0 )
             transType = argv[i+1];
+        if( strcmp(argv[i], "-d") == 0 )
+            dev = argv[i+1];
     }
+    */
 
-    std::string logfile = createLogDir("./logs");
+    PParams param;
+    readConfiger( "./default.conf", &param );
+
+    std::cout << endl
+              << "[GeneralParams]" << endl
+              << param.generalParams_ << endl << endl
+              << "[PublisherParams]" << endl
+              << param.publisherParams_ << endl << endl
+              << "[VideoCapturerParams]" << endl
+              << param.capturerParam_ << endl << endl
+              << "[VideoCoderParams]" << endl
+              << param.coderParams_ << endl
+              << "[MediaStreamParams]" << endl
+              << param.mediaStreamParams_ << endl << endl;
+
+    // capturer
+    //std::cout << "dev " << param.generalParams_.dev_ << std::endl;
+    param.capturer_ = new FFCapturer(/*param.generalParams_.dev_*/);
+    //capturer->init();
+    //capturer->start();
+
+    // logger
+    std::string logfile = createLogDir(param.generalParams_.logFile_.c_str());
     GLogger glog( argv[0], logfile.c_str() );
     std::cout << "Log to path: " << logfile << std::endl;
 
-    FFCapturer *capturer = new FFCapturer;
-    capturer->init();
-    capturer->start();
-
-    for( i = 0; i < 1 /*num*/; ++i )
+    for( int i = 0; i < 1 /*num*/; ++i )
     {
-        std::string streamName = "/com/monitor/location1/stream0/video";
+        //std::string streamName = "/com/monitor/location1/stream0/video";
         /*
         std::string streamName = "/com/monitor/location1/stream";
         stringstream ss;
@@ -141,14 +202,19 @@ int main(int argc, char** argv)
         */
         //std::cout << streamName << std::endl;
 
-        addLocalStream(transType, streamName, capturer);
+        //addLocalStream(transType, streamName, capturer);
+        addLocalStream(&param);
+        std::cout << "Publishing " << param.mediaStreamParams_.streamName_ << std::endl;
     }
-    std::cout << "added " << i << " stream" << std::endl;
+
 
     std::string endstr;
     std::cin>>endstr;
     while( 0!=endstr.compare("stop") && 0!=endstr.compare("STOP"))
         std::cin >> endstr;
+
+    int i = manager->removeAll();
+
     return 0;
 }
 
