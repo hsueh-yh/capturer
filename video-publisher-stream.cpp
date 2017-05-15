@@ -51,18 +51,18 @@ VideoPublisherStream::~VideoPublisherStream ()
 
 
 int
-VideoPublisherStream::init(const PublisherSettings &settings,
-                           const MediaThreadParams* videoThreadParams)
+VideoPublisherStream::init(const PublisherSettings &settings/*,
+                           const MediaThreadParams* videoThreadParams*/)
 {
     LOG(INFO) << "VideoPublihser init" << std::endl;
-    if( RESULT_NOT_OK(Publisher::init(settings,videoThreadParams)) )
+    if( RESULT_NOT_OK(Publisher::init(settings/*,videoThreadParams*/)) )
         return RESULT_ERR;
 
-    videoThreadParams_ = *(VideoThreadParams*)(videoThreadParams);
+    //videoThreadParams_ = *(VideoThreadParams*)(videoThreadParams);
 
-    videoCapturer_->init();
+    videoCapturer_->init(settings.captureParams_);
     videoCapturer_->registerRawFrameConsumer(videoEncoder_.get());
-    videoEncoder_->init(videoThreadParams_.coderParams_);
+    videoEncoder_->init(settings.coderParams_/*videoThreadParams_.coderParams_*/);
     videoEncoder_->setEncodedFrameConsumer(this);
 
     return RESULT_OK;
@@ -88,6 +88,9 @@ VideoPublisherStream::stop()
         fclose(fp_yuv);
     if (isBackup264)
         fclose(fp_264);
+
+    videoCapturer_->stop();
+    videoEncoder_->stop();
 
     return RESULT_OK;
 }

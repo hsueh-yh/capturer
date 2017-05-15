@@ -19,10 +19,17 @@ FFCapturer::~FFCapturer()
 }
 
 int
-FFCapturer::init()
+FFCapturer::init( const VideoCapturerParams& params )
 {
+    devFormat = params.format_;
+    devURL = params.dev_;
+    width_ = params.width_;
+    height_ = params.height_;
+
     openDevice();
     initEncoder();
+
+    return 1;
 }
 
 int
@@ -68,6 +75,29 @@ FFCapturer::start()
         else
             printf("open file success\n");
     }
+    return 1;
+}
+
+int
+FFCapturer::stop()
+{
+    avcodec_close(pCodecCtx);
+    avformat_close_input(&pFormatCtx);
+
+    //if( img_convert_ctx )
+    //    sws_freeContext(img_convert_ctx);
+
+    if(backup)
+        fclose(fp_yuv);
+
+    av_frame_free(&pFrameYUV);
+    //av_free(out_buffer);
+    //av_free(pFrameYUV);
+    std::vector<AVFrame*>::iterator it = avframesMap_.begin();
+    for( ; it != avframesMap_.end(); ++it )
+        av_frame_free(&(*it));
+
+    return 1;
 }
 
 int
@@ -75,28 +105,11 @@ FFCapturer::getFrame(unsigned char *outbuf, int &outlen, int64_t &millisecondTim
 {
     return capture( outbuf, outlen, millisecondTimestamp );
 }
+
 int
 FFCapturer::getFrame( AVFrame &frame )
 {
     //return capture( frame );
-}
-
-int
-FFCapturer::stop()
-{
-    sws_freeContext(img_convert_ctx);
-
-    if(backup)
-        fclose(fp_yuv);
-
-    av_free(out_buffer);
-    av_frame_free(&pFrameYUV);
-    //av_free(pFrameYUV);
-    avcodec_close(pCodecCtx);
-    avformat_close_input(&pFormatCtx);
-    std::vector<AVFrame*>::iterator it = avframesMap_.begin();
-    for( ; it != avframesMap_.end(); ++it )
-        av_frame_free(&(*it));
 }
 
 void*
@@ -105,8 +118,8 @@ FFCapturer::getFrameBuf()
     AVFrame *frame;
     frame = av_frame_alloc();
     frame->format = AV_PIX_FMT_YUV420P;
-    frame->width = 640;
-    frame->height = 480;
+    frame->width = width_;
+    frame->height = height_;
     av_frame_get_buffer(frame,1);
     avframesMap_.push_back(frame);
     return (void*)frame;

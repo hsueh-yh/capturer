@@ -98,7 +98,7 @@ Publisher::~Publisher ()
 
 
 int
-Publisher::init(const PublisherSettings &settings, const MediaThreadParams* videoThreadParams)
+Publisher::init(const PublisherSettings &settings)
 {
     settings_ = settings;
     face_ = settings_.faceProcessor_->getFaceWrapper();

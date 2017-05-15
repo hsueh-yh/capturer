@@ -55,7 +55,9 @@ Manager::getSharedInstance()
 
 std::string
 Manager::addLocalStream(const GeneralParams &generalParams,
-                        const VideoThreadParams &videoThreadParams,
+                        const PublisherParams &publisherParams,
+                        const VideoCapturerParams captureParams,
+                        const VideoCoderParams coderParams,
                         const MediaStreamParams &mediaStreamParams,
                         IExternalCapturer *const capturer)
 {
@@ -75,11 +77,15 @@ Manager::addLocalStream(const GeneralParams &generalParams,
             publisher.reset(new VideoPublisherStream(generalParams, capturer));
 
         PublisherSettings settings;
-        settings.streamPrefix_ = mediaStreamParams.streamName_;
-        settings.faceProcessor_ = face;
+        settings.publisherParams_ = publisherParams;
+        settings.captureParams_ = captureParams;
+        settings.coderParams_ = coderParams;
         settings.streamParams_ = mediaStreamParams;
 
-        publisher->init(settings,&videoThreadParams);
+        settings.streamPrefix_ = mediaStreamParams.streamName_;
+        settings.faceProcessor_ = face;
+
+        publisher->init(settings);
         streamPrefix = publisher->getStreamName();
 
         publisher->start();
@@ -119,6 +125,18 @@ Manager::removeLocalStream(const std::string streamPrefix)
               << std::endl;
 
     return logFileName;
+}
+
+int
+Manager::removeAll()
+{
+    int i = 0;
+    for( auto a : ActivePublishers )
+    {
+        removeLocalStream(a.first);
+        ++i;
+    }
+    return i;
 }
 
 //******************************************************************************

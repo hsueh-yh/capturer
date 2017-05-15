@@ -13,13 +13,18 @@ public:
     ~Manager();
 
     std::string
-    addLocalStream( const GeneralParams &generalParams,
-                    const VideoThreadParams &videoThreadParams,
-                    const MediaStreamParams &mediaStreamParams,
-                    IExternalCapturer *const capturer);
+    addLocalStream(const GeneralParams &generalParams,
+                   const PublisherParams &publisherParams,
+                   const VideoCapturerParams captureParams,
+                   const VideoCoderParams coderParams,
+                   const MediaStreamParams &mediaStreamParams,
+                   IExternalCapturer *const capturer);
 
     std::string
     removeLocalStream(const std::string streamPrefix);
+
+    int
+    removeAll();
 
 
 private:

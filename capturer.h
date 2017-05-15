@@ -35,19 +35,20 @@ public:
     FFCapturer();
     ~FFCapturer();
 
-    int init();
+    int init(const VideoCapturerParams &params );
 
     int start();
-
-    int getFrame(unsigned char *outbuf, int &outlen, int64_t &millisecondTimestamp);
-
-    int getFrame( AVFrame &frame );
 
     int stop();
 
     void* getFrameBuf();
 
     int incomingYUV420Frame(void* frameObj, int64_t &captureTsMs);
+
+
+    int getFrame(unsigned char *outbuf, int &outlen, int64_t &millisecondTimestamp);
+
+    int getFrame( AVFrame &frame );
 
 
 //private:
@@ -65,6 +66,7 @@ public:
     AVFrame *pFrameYUV;
     std::vector<AVFrame*> avframesMap_;
 
+    int width_, height_;
 
     FILE *fp_yuv;
     bool backup;

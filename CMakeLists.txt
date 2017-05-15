@@ -13,6 +13,8 @@ aux_source_directory(. SRC_LIST)
 
 #add_subdirectory(subsrc)
 include_directories(./)    #head file path
+include_directories(/usr/local/include)
+
 
 ############generate binary files############
 set(LIBRARY_OUTPUT_PATH ./)
@@ -27,7 +29,7 @@ link_directories(/usr/local/lib)
 
 #set extern libraries
 set(LIBBOOST boost_thread boost_system boost_chrono boost_regex)
-set(LIBTHIREPARTY pthread protobuf sqlite3 crypto)
+set(LIBTHIREPARTY pthread config++ protobuf sqlite3 crypto)
 set(LIBNDNCPP ndn-cpp)
 set(LIBFFMPEG avcodec avutil avformat avfilter avdevice postproc swscale)
 set(LIBGLOG glog)

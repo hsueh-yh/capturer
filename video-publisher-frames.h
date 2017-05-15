@@ -17,7 +17,7 @@ public:
     ~VideoPublisherFrames();
 
     int
-    init(const PublisherSettings &settings, const MediaThreadParams* videoThreadParams);
+    init(const PublisherSettings &settings/*, const MediaThreadParams* videoThreadParams*/);
 
     int
     start();

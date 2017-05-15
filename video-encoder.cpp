@@ -2,24 +2,23 @@
 #include "glogger.h"
 
 VideoEncoder::VideoEncoder():
-    encoder_(new FFEncoder)
+    ff_encoder_(new FFEncoder)
 {}
 
 VideoEncoder::~VideoEncoder()
 {}
 
 void
-VideoEncoder::init(VideoCoderParams settings)
+VideoEncoder::init(const VideoCoderParams& settings)
 {
-    reset();
-    settings_ = settings;
+    reset(settings);
 }
 
 void
 VideoEncoder::onDeliverRawFrame(void *frame, int64_t captureTsMs)
 {
     //std::cout << "VideoEncoder onDeliverRawFrame" << std::endl;
-    encoder_->encode(frame, captureTsMs);
+    ff_encoder_->encode(frame, captureTsMs);
 }
 
 void
@@ -34,11 +33,15 @@ VideoEncoder::onEncoded(const AVPacket &decodedFrame, int64_t captureTimestamp)
 }
 
 void
-VideoEncoder::reset()
+VideoEncoder::reset(const VideoCoderParams &settings)
 {
-    if( encoder_.get() )
+    settings_ = settings;
+    if( ff_encoder_.get() )
     {
-        encoder_->RegisterEncodeCompleteCallback(this);
-        encoder_->init();
+        ff_encoder_->RegisterEncodeCompleteCallback(this);
+        ff_encoder_->init(settings_);
     }
+
+    VLOG(LOG_INFO) << "VideoEncoder Settings: " << endl
+                   << settings_ << endl;
 }
