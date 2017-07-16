@@ -10,6 +10,7 @@ const std::string NameComponents::NameComponentStreamFrameVideo = "video";
 const std::string NameComponents::NameComponentStreamFrameAudio = "audio";
 const std::string NameComponents::NameComponentStreamMetaIdx = "metainfo";
 const std::string NameComponents::NameComponentNalIdx = "naluType";
+const std::string NameComponents::NameComponentExit = "exit";
 
 //const std::string NameComponents::KeyComponent;
 //const std::string NameComponents::CertificateComponent;

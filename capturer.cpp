@@ -21,6 +21,7 @@ FFCapturer::~FFCapturer()
 int
 FFCapturer::init( const VideoCapturerParams& params )
 {
+    std::lock_guard<std::recursive_mutex> guard(r_mutex_);
     devFormat = params.format_;
     devURL = params.dev_;
     width_ = params.width_;
@@ -35,6 +36,7 @@ FFCapturer::init( const VideoCapturerParams& params )
 int
 FFCapturer::start()
 {
+    std::lock_guard<std::recursive_mutex> guard(r_mutex_);
     pFrame=av_frame_alloc();
     pFrameYUV=av_frame_alloc();
 
@@ -81,6 +83,7 @@ FFCapturer::start()
 int
 FFCapturer::stop()
 {
+    std::lock_guard<std::recursive_mutex> guard(r_mutex_);
     avcodec_close(pCodecCtx);
     avformat_close_input(&pFormatCtx);
 
@@ -103,6 +106,7 @@ FFCapturer::stop()
 int
 FFCapturer::getFrame(unsigned char *outbuf, int &outlen, int64_t &millisecondTimestamp)
 {
+    std::lock_guard<std::recursive_mutex> guard(r_mutex_);
     return capture( outbuf, outlen, millisecondTimestamp );
 }
 
@@ -115,6 +119,7 @@ FFCapturer::getFrame( AVFrame &frame )
 void*
 FFCapturer::getFrameBuf()
 {
+    std::lock_guard<std::recursive_mutex> guard(r_mutex_);
     AVFrame *frame;
     frame = av_frame_alloc();
     frame->format = AV_PIX_FMT_YUV420P;
@@ -128,6 +133,7 @@ FFCapturer::getFrameBuf()
 int
 FFCapturer::incomingYUV420Frame(void* frameObj, int64_t &captureTsMs)
 {
+    std::lock_guard<std::recursive_mutex> guard(r_mutex_);
     //LOG(INFO) << "incomingYUV420Frame" << std::endl;
     capture(frameObj,captureTsMs);
 }

@@ -44,6 +44,8 @@ VideoCapturer::stop()
 bool
 VideoCapturer::process()
 {
+    if( !isCapturing_ )
+        return false;
     //LOG(INFO) << "VideoCapturer process" << std::endl;
     externalCapturer_->incomingYUV420Frame(capturedFrameObj_,capturedTsMs_);
     //ff_capturer_.getFrame(*capturedFrame_);

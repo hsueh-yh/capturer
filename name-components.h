@@ -14,6 +14,7 @@ public:
     static const std::string NameComponentStreamFrameAudio;
     static const std::string NameComponentStreamMetaIdx;
     static const std::string NameComponentNalIdx;
+    static const std::string NameComponentExit;
 //    static const std::string KeyComponent;
 //    static const std::string CertificateComponent;
 

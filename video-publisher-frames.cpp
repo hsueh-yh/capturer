@@ -164,7 +164,7 @@ VideoPublisherFrames::processInterest(
     std::string streamPrefix_ = getStreamName();
     Name requestName(interest->getName());
     //Name responseName(requestName);
-    Name responseName("/com/monitor/location1/stream0/video");
+    Name responseName(streamPrefix_);
     responseName.append(requestName.getSubName(responseName.size()));
 
     LOG(INFO) << "Request : " << requestName.toUri() << endl;
