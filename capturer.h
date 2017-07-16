@@ -25,7 +25,7 @@ extern "C"
 #endif
 
 #include <vector>
-
+#include <mutex>
 
 class FFCapturer: public IExternalCapturer
 {
@@ -72,7 +72,7 @@ public:
     bool backup;
 
     int flg =1;
-
+    std::recursive_mutex r_mutex_;
 
     //device
     AVInputFormat *ifmt;

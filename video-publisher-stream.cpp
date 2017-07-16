@@ -148,6 +148,17 @@ VideoPublisherStream::processInterest(
     LOG(INFO) << "RCVE " << interest->getName().toUri() << endl;
     ++requestCounter_;
 
+    bool isExit = (0 <= Namespacer::findComponent(
+                          interest->getName(),
+                          NameComponents::NameComponentExit) );
+
+    if( isExit )
+    {
+        LOG(INFO) << "stop..." << endl << endl;
+        req_.setState( false ); // stop streaming
+        return;
+    }
+
     int64_t lifeTime = interest->getInterestLifetimeMilliseconds();
     bool isReqStream = (lifeTime >= 4000);
 
@@ -167,6 +178,9 @@ VideoPublisherStream::processInterest(
         bool isReqMeta = (0 <= Namespacer::findComponent(
                               requestName,
                               NameComponents::NameComponentStreamMetaIdx) );
+        bool isExit = (0 <= Namespacer::findComponent(
+                              requestName,
+                              NameComponents::NameComponentExit) );
 
         // request meta
         if( isReqMeta )
@@ -179,6 +193,11 @@ VideoPublisherStream::processInterest(
             return ;
         }
         //request frame
+        else if( isExit )
+        {
+            req_.setState( false ); // stop streaming
+            return;
+        }
         else
         {
             pushFrame( interest->getName() );

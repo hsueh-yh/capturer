@@ -108,7 +108,7 @@ Publisher::init(const PublisherSettings &settings)
 
     LOG(INFO) << "Register prefix " << getStreamName() << endl;
     registedId_ = face_->registerPrefix(
-                "/com/monitor/location1" /*getStreamName()*/,
+                /*"/com/monitor/location1"*/ getStreamName(),
                 (const OnInterestCallback&)func_lib::bind(
                                                    &Publisher::onInterest,
                                                    this,
