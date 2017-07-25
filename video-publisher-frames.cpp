@@ -176,7 +176,12 @@ VideoPublisherFrames::processInterest(
     //if( requestName.getPrefix(metaName.size()).equals(metaName))
     if( 0 <= Namespacer::findComponent(requestName,NameComponents::NameComponentStreamMetaIdx))
     {
-        Data data(requestName.append(MtNdnUtils::componentFromInt(frameBuffer_->getLastPktNo())));
+        requestName.append(MtNdnUtils::componentFromInt(frameBuffer_->getLastPktNo()));
+        //requestName.append("1");
+        Data data(requestName);
+        vector<uint8_t> tmp(1,1);
+        const Blob content ( tmp );
+        data.setContent( content );
         face.putData(data);
         ++responseCount_;
 
@@ -201,11 +206,19 @@ VideoPublisherFrames::processInterest(
         return ;
     }
 
-    const Blob content ( naluData->dataPtr(), naluData->size() );
+    vector<uint8_t> tmp(naluData->size()+1);
+    tmp[0] = 1;
+    unsigned char *start = naluData->dataPtr(), *end = naluData->dataPtr()+naluData->size();
+    for( int i = 1; start != end; ++start,++i )
+        tmp[i] = *start;
+
+    //const Blob content ( naluData->dataPtr(), naluData->size() );
+    const Blob content ( tmp );
 
     requestName.append(NameComponents::NameComponentNalIdx);
     requestName.append(nalType);
     requestName.append(MtNdnUtils::componentFromInt(lastPktNo-1));
+    //requestName.append("1");
     //requestName.append(MtNdnUtils::componentFromInt(lastPktNo));
     Data ndnData(requestName);
 

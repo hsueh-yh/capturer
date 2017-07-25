@@ -5,7 +5,7 @@
 !*.hpp
 !*.c
 !*.cpp
-
+!*.txt
 !CMakeLists.txt
 
 !/include/
