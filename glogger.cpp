@@ -37,7 +37,7 @@ GLogger::GLogger(const char *program, const char *logdir, int glogleve):
     google::InitGoogleLogging(program);
     google::InstallFailureSignalHandler();
     //默认捕捉 SIGSEGV 信号信息输出会输出到 stderr，可以通过下面的方法自定义输出方式：
-    google::InstallFailureWriter(&SignalHandle);
+    //google::InstallFailureWriter(&SignalHandle);
 
 }
 GLogger::~GLogger()
