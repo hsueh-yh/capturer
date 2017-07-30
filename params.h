@@ -175,7 +175,7 @@ class GeneralParams : public Params {
 public:
     // general
     ndnlog::NdnLoggerDetailLevel loggingLevel_ = ndnlog::NdnLoggerDetailLevelAll;
-    int         glogLevel_ = 3;
+    unsigned int         glogLevel_ = 3;
     std::string logFile_ = "";
     std::string logPath_ = "";
     std::string transType_ = "byFrame";

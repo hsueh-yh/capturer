@@ -85,7 +85,7 @@ int readConfiger( std::string configFIle, PParams* pObj )
                && param.lookupValue("type", p->transType_)
                && param.lookupValue("logs", p->logFile_))
                && param.lookupValue("loglevel", p->glogLevel_))
-            continue;
+                continue;
         }
     }
     catch(const SettingNotFoundException &nfex)

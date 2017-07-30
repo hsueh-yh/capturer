@@ -289,7 +289,7 @@ FFCapturer::capture( void* frameObj, int64_t &captureTsMs )
     {
         if(packet->stream_index==videoindex)
         {
-            ret = avcodec_decode_video2(pCodecCtx, pFrame, &got_picture, packet);
+            ret = avcodec_decode_video2(pCodecCtx, outFrame/*pFrame*/, &got_picture, packet);
             if(ret < 0)
             {
                 printf("Decode Error.\n");
@@ -297,9 +297,9 @@ FFCapturer::capture( void* frameObj, int64_t &captureTsMs )
             }
             if(got_picture)
             {
-                sws_scale(img_convert_ctx, (const unsigned char* const*)pFrame->data,
-                          pFrame->linesize, 0, pCodecCtx->height,
-                          outFrame->data, outFrame->linesize);
+//                sws_scale(img_convert_ctx, (const unsigned char* const*)pFrame->data,
+//                          pFrame->linesize, 0, pCodecCtx->height,
+//                          outFrame->data, outFrame->linesize);
 //                std::cout << "capturer "
 //                          << outFrame->width << " " << outFrame->height
 //                          << " " << (void*)&(outFrame->data) << std::endl;
