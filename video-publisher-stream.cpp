@@ -99,7 +99,7 @@ void
 VideoPublisherStream::onEncodedFrameDelivered(vector<uint8_t> &encodedImage,
                                    int64_t captureTimestamp)
 {
-    //cout << "Get 264 " << " ( size = " << outlen264 << " )" <<endl;
+    VLOG(LOG_TRACE) << "[VideoPublisherStream]\tonEncodedFrameDelivered" << std::endl;
     ++currentFrameNo_;
 
     // caching

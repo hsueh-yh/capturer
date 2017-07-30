@@ -18,10 +18,12 @@ enum LogLevel {
   LOG_ALL            = 255 // all messages
 };
 
+//const int GLOG_INFO = 0, GLOG_WARNING = 1, GLOG_ERROR = 2, GLOG_FATAL = 3,
+
 class GLogger
 {
 public:
-    GLogger( const char *program, const char *logdir);
+    GLogger( const char *program, const char *logdir, int glogleve = 3 );
     ~GLogger();
 
     //将信息输出到单独的文件和 LOG(ERROR)

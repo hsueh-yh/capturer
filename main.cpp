@@ -187,7 +187,7 @@ int main(int argc, char** argv)
 
     // logger
     std::string logfile = createLogDir(param.generalParams_.logFile_.c_str());
-    GLogger glog( argv[0], logfile.c_str() );
+    GLogger glog( argv[0], logfile.c_str(), param.generalParams_.glogLevel_ );
     std::cout << "Log to path: " << logfile << std::endl;
 
     for( int i = 0; i < 1 /*num*/; ++i )

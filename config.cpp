@@ -83,7 +83,8 @@ int readConfiger( std::string configFIle, PParams* pObj )
                && param.lookupValue("port", p->portNum_)
                && param.lookupValue("dev", p->dev_)
                && param.lookupValue("type", p->transType_)
-               && param.lookupValue("logs", p->logFile_)))
+               && param.lookupValue("logs", p->logFile_))
+               && param.lookupValue("loglevel", p->glogLevel_))
             continue;
         }
     }

@@ -289,9 +289,6 @@ FFCapturer::capture( void* frameObj, int64_t &captureTsMs )
     {
         if(packet->stream_index==videoindex)
         {
-            cout << pFormatCtx->streams[videoindex]->codec->codec_name
-                 << pFormatCtx->streams[videoindex]->codec->codec_id
-                 << "********************************"<< endl;
             ret = avcodec_decode_video2(pCodecCtx, pFrame, &got_picture, packet);
             if(ret < 0)
             {
