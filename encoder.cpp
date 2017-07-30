@@ -35,7 +35,7 @@ FFEncoder::init(VideoCoderParams &params, AVCodecID codec_id)
     codeCtx->width = width;
     codeCtx->height = height;
     /* frames per second */
-    codeCtx->time_base = (AVRational){1,25};
+    codeCtx->time_base = (AVRational){1,(int)(params.codecFrameRate_)};
     /* emit one intra frame every ten frames
      * check frame pict_type before passing frame
      * to encoder, if frame->pict_type is AV_PICTURE_TYPE_I

@@ -10,6 +10,7 @@ FFCapturer::FFCapturer():
     audioindex(-1),
     devFormat("video4linux2"),
     devURL("/dev/video0"),
+    avPixelFormat(AV_PIX_FMT_YUV420P),
     backup(false)
 {}
 
@@ -51,11 +52,11 @@ FFCapturer::start()
     }
 
     img_convert_ctx = sws_getContext(pCodecCtx->width, pCodecCtx->height, pCodecCtx->pix_fmt,
-                                     pCodecCtx->width, pCodecCtx->height, AV_PIX_FMT_YUV420P,
+                                     pCodecCtx->width, pCodecCtx->height, avPixelFormat,
                                      SWS_BICUBIC, NULL, NULL, NULL);
 
     out_buffer=(unsigned char *) av_malloc(
-                av_image_get_buffer_size(AV_PIX_FMT_YUV420P,
+                av_image_get_buffer_size(avPixelFormat,
                                          pCodecCtx->width, pCodecCtx->height, 1)
                 );
     if( out_buffer ==NULL )
@@ -64,7 +65,7 @@ FFCapturer::start()
         return -1;
     }
     av_image_fill_arrays(pFrameYUV->data, pFrameYUV->linesize,
-                         out_buffer, AV_PIX_FMT_YUV420P,
+                         out_buffer, avPixelFormat,
                          pCodecCtx->width, pCodecCtx->height,1);
 
     if(backup)
@@ -122,7 +123,7 @@ FFCapturer::getFrameBuf()
     std::lock_guard<std::recursive_mutex> guard(r_mutex_);
     AVFrame *frame;
     frame = av_frame_alloc();
-    frame->format = AV_PIX_FMT_YUV420P;
+    frame->format = avPixelFormat;
     frame->width = width_;
     frame->height = height_;
     av_frame_get_buffer(frame,1);
@@ -288,6 +289,9 @@ FFCapturer::capture( void* frameObj, int64_t &captureTsMs )
     {
         if(packet->stream_index==videoindex)
         {
+            cout << pFormatCtx->streams[videoindex]->codec->codec_name
+                 << pFormatCtx->streams[videoindex]->codec->codec_id
+                 << "********************************"<< endl;
             ret = avcodec_decode_video2(pCodecCtx, pFrame, &got_picture, packet);
             if(ret < 0)
             {

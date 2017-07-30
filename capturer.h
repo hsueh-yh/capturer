@@ -57,21 +57,23 @@ public:
     int				i, videoindex, audioindex;
     AVCodecContext	*pCodecCtx;
     AVCodec			*pCodec;
+    AVPixelFormat   avPixelFormat;
 
-    AVFrame	*pFrame;
-    AVPacket *packet;
+    AVFrame         *pFrame;
+    AVPacket        *packet;
     struct SwsContext *img_convert_ctx;
 
-    unsigned char *out_buffer;
-    AVFrame *pFrameYUV;
+    unsigned char   *out_buffer;
+    AVFrame         *pFrameYUV;
     std::vector<AVFrame*> avframesMap_;
 
-    int width_, height_;
+    int             width_,
+                    height_;
 
-    FILE *fp_yuv;
-    bool backup;
+    FILE            *fp_yuv;
+    bool            backup;
 
-    int flg =1;
+    int             flg =1;
     std::recursive_mutex r_mutex_;
 
     //device
