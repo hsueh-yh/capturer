@@ -25,7 +25,7 @@ GLogger::GLogger(const char *program, const char *logdir, int glogleve):
     //google::SetLogDestination(google::INFO,logdir);
     //google::SetLogDestination(google::WARNING,logdir);
     //google::SetLogDestination(google::GLOG_ERROR,logdir);
-    FLAGS_minloglevel = INFO;   //Messages logged at a lower level than this don't
+    FLAGS_minloglevel = google::INFO;   //Messages logged at a lower level than this don't
                                         //actually get logged anywhere
     FLAGS_stop_logging_if_full_disk = true;   //Stop attempting to log to disk if the disk is full
     FLAGS_logbufsecs = 60;
