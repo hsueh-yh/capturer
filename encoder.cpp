@@ -1,5 +1,5 @@
 #include "encoder.h"
-
+#include "glogger.h"
 
 FFEncoder::FFEncoder():
     backup(0),
@@ -200,7 +200,14 @@ FFEncoder::encode( void *pframe, int64_t captureTimestamp )
         //exit(1);
     }
 
-    if (got_output) {
+    if (got_output)
+    {
+        VLOG(LOG_TRACE) << "FFCapturer::capture: "
+                  << frame->width << "*"
+                  << frame->height
+                  << " encoded to "
+                  << avpkt.size << std::endl;
+
         if( callback_ )
         {
             //std::cout << "Encoded " << avpkt.size << " " << avpkt.data << std::endl;

@@ -128,6 +128,7 @@ FFCapturer::getFrameBuf()
     frame->height = height_;
     av_frame_get_buffer(frame,1);
     avframesMap_.push_back(frame);
+    cout << width_ << "***************************************" << height << endl;
     return (void*)frame;
 }
 
@@ -289,7 +290,7 @@ FFCapturer::capture( void* frameObj, int64_t &captureTsMs )
     {
         if(packet->stream_index==videoindex)
         {
-            ret = avcodec_decode_video2(pCodecCtx, outFrame/*pFrame*/, &got_picture, packet);
+            ret = avcodec_decode_video2(pCodecCtx, /*outFrame*/pFrame, &got_picture, packet);
             if(ret < 0)
             {
                 printf("Decode Error.\n");
@@ -297,12 +298,16 @@ FFCapturer::capture( void* frameObj, int64_t &captureTsMs )
             }
             if(got_picture)
             {
-//                sws_scale(img_convert_ctx, (const unsigned char* const*)pFrame->data,
-//                          pFrame->linesize, 0, pCodecCtx->height,
-//                          outFrame->data, outFrame->linesize);
-//                std::cout << "capturer "
-//                          << outFrame->width << " " << outFrame->height
-//                          << " " << (void*)&(outFrame->data) << std::endl;
+                sws_scale(img_convert_ctx, (const unsigned char* const*)pFrame->data,
+                          pFrame->linesize, 0, pCodecCtx->height,
+                          outFrame->data, outFrame->linesize);
+                VLOG(LOG_TRACE) << "FFCapturer::capture: "
+                          << pFrame->width << "*"
+                          << pFrame->height
+                          << " scale to "
+                          << outFrame->width << "*"
+                          << outFrame->height << std::endl;
+
                 if( backup)
                 {
                     saveFrame(outFrame, pCodecCtx->width, pCodecCtx->height);
