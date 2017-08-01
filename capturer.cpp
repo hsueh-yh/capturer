@@ -128,7 +128,7 @@ FFCapturer::getFrameBuf()
     frame->height = height_;
     av_frame_get_buffer(frame,1);
     avframesMap_.push_back(frame);
-    cout << width_ << "***************************************" << height << endl;
+    cout << width_ << "***************************************" << height_ << endl;
     return (void*)frame;
 }
 
@@ -314,6 +314,13 @@ FFCapturer::capture( void* frameObj, int64_t &captureTsMs )
                 }
 
             }//if(got_picture)
+            else
+            {
+                VLOG(LOG_TRACE) << "FFCapturer::capture: failed "
+                          << pFrame->width << "*"
+                          << pFrame->height
+                          << std::endl;
+            }
 
         }//if(packet->stream_index==videoindex)
 
