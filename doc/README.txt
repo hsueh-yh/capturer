@@ -48,3 +48,7 @@
 	3. make
 		make
 
+
+>>>Run:
+	cp ../src/default.conf.sample ./default.conf
+	./capture
