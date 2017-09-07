@@ -6,8 +6,7 @@
 !*.c
 !*.cpp
 !*.txt
-!CMakeLists.txt
+!*.sample
 
-!/include/
 !/src/
-!/client/
+!/doc/
