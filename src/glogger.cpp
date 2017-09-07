@@ -11,7 +11,7 @@ static void SignalHandle(const char *data, int size)
     LOG(ERROR)<<str;
 }
 
-GLogger::GLogger( const char *program, const char *logdir):
+GLogger::GLogger(const char *program, const char *logdir, int glogleve):
         logdir_(logdir)
 {
     //google::InitGoogleLogging(program);
@@ -19,7 +19,7 @@ GLogger::GLogger( const char *program, const char *logdir):
     FLAGS_logtostderr = false;      //log messages go to stderr instead of logfiles
     FLAGS_alsologtostderr = true;    //log messages go to stderr in addition to logfiles
     FLAGS_colorlogtostderr = true;    //color messages logged to stderr (if supported by terminal)
-    FLAGS_v = 255;
+    FLAGS_v = glogleve;
     logdir_ = logdir;
     FLAGS_log_dir = logdir;   // logger output file
     //google::SetLogDestination(google::INFO,logdir);
@@ -37,7 +37,7 @@ GLogger::GLogger( const char *program, const char *logdir):
     google::InitGoogleLogging(program);
     google::InstallFailureSignalHandler();
     //默认捕捉 SIGSEGV 信号信息输出会输出到 stderr，可以通过下面的方法自定义输出方式：
-    google::InstallFailureWriter(&SignalHandle);
+    //google::InstallFailureWriter(&SignalHandle);
 
 }
 GLogger::~GLogger()

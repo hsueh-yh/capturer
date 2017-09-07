@@ -24,7 +24,7 @@ VideoCapturer::init(const VideoCapturerParams &params)
 void
 VideoCapturer::start()
 {
-    LOG(INFO) << "VideoCapturer start" << std::endl;
+    VLOG(LOG_INFO) << "VideoCapturer start" << std::endl;
 //    captureThread_ = startThread([this]()->bool{
 //        return process();
 //    });

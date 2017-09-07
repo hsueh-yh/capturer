@@ -1,6 +1,14 @@
-Prerequisites:
-ndn-cpp
-ffmpeg3.0.2
-glog
-libconfig
-cmake
+>>>directory structure:
+
+	./src
+	Source files of the stream publisher.
+
+	./doc
+	Using documents for stream server
+
+	./bin
+	library and executable file directory, if exist
+
+
+
+

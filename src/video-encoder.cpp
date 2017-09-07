@@ -17,6 +17,7 @@ VideoEncoder::init(const VideoCoderParams& settings)
 void
 VideoEncoder::onDeliverRawFrame(void *frame, int64_t captureTsMs)
 {
+    VLOG(LOG_TRACE) << "[VideoEncoder]\tonDeliverRawFrame" << std::endl;
     //std::cout << "VideoEncoder onDeliverRawFrame" << std::endl;
     ff_encoder_->encode(frame, captureTsMs);
 }
@@ -26,7 +27,7 @@ VideoEncoder::onEncoded(const AVPacket &decodedFrame, int64_t captureTimestamp)
 {
     if( frameConsumer_ )
     {
-        //LOG(INFO) << "VideoEncoder onEncoded" << std::endl;
+        VLOG(LOG_TRACE) << "[VideoEncoder]\tonEncoded" << std::endl;
         vector<uint8_t> frame(decodedFrame.data,decodedFrame.data+decodedFrame.size);
         frameConsumer_->onEncodedFrameDelivered(frame, captureTimestamp);
     }
@@ -42,6 +43,6 @@ VideoEncoder::reset(const VideoCoderParams &settings)
         ff_encoder_->init(settings_);
     }
 
-    VLOG(LOG_INFO) << "VideoEncoder Settings: " << endl
+    VLOG(LOG_TRACE) << "VideoEncoder Settings: " << endl
                    << settings_ << endl;
 }

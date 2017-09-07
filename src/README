@@ -1,0 +1,6 @@
+Prerequisites:
+ndn-cpp
+ffmpeg3.0.2
+glog
+libconfig
+cmake
