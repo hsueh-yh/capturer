@@ -5,9 +5,8 @@
 !*.hpp
 !*.c
 !*.cpp
+!*.txt
+!*.sample
 
-!CMakeLists.txt
-
-!/include/
 !/src/
-!/client/
+!/doc/
